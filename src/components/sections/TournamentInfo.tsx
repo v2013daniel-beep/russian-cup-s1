@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Trophy, Users, Globe, Zap, Target, Crown } from "lucide-react";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { Card } from "@/components/ui/Card";
+import { TiltCard } from "@/components/effects/TiltCard";
+import { FloatingRunes3D } from "@/components/effects/FloatingRunes3D";
 
 interface TournamentInfoProps {
   prizePool: string;
@@ -20,6 +22,7 @@ export function TournamentInfo({ prizePool, format, server }: TournamentInfoProp
       color: "text-dota-gold",
       bgColor: "bg-dota-gold/10",
       borderColor: "border-dota-gold/30",
+      glow: "gold" as const,
     },
     {
       icon: Users,
@@ -28,6 +31,7 @@ export function TournamentInfo({ prizePool, format, server }: TournamentInfoProp
       color: "text-dota-red",
       bgColor: "bg-dota-red/10",
       borderColor: "border-dota-red/30",
+      glow: "red" as const,
     },
     {
       icon: Globe,
@@ -36,6 +40,7 @@ export function TournamentInfo({ prizePool, format, server }: TournamentInfoProp
       color: "text-blue-400",
       bgColor: "bg-blue-400/10",
       borderColor: "border-blue-400/30",
+      glow: "blue" as const,
     },
     {
       icon: Zap,
@@ -44,6 +49,7 @@ export function TournamentInfo({ prizePool, format, server }: TournamentInfoProp
       color: "text-yellow-400",
       bgColor: "bg-yellow-400/10",
       borderColor: "border-yellow-400/30",
+      glow: "gold" as const,
     },
     {
       icon: Target,
@@ -52,6 +58,7 @@ export function TournamentInfo({ prizePool, format, server }: TournamentInfoProp
       color: "text-green-400",
       bgColor: "bg-green-400/10",
       borderColor: "border-green-400/30",
+      glow: "blue" as const,
     },
     {
       icon: Crown,
@@ -60,6 +67,7 @@ export function TournamentInfo({ prizePool, format, server }: TournamentInfoProp
       color: "text-purple-400",
       bgColor: "bg-purple-400/10",
       borderColor: "border-purple-400/30",
+      glow: "purple" as const,
     },
   ];
 
@@ -72,6 +80,8 @@ export function TournamentInfo({ prizePool, format, server }: TournamentInfoProp
       />
       <div className="absolute inset-0 bg-gradient-to-b from-dota-black via-dota-void/95 to-dota-black" />
       <div className="vignette" />
+
+      <FloatingRunes3D count={12} className="z-[1] opacity-60" />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle
@@ -89,19 +99,21 @@ export function TournamentInfo({ prizePool, format, server }: TournamentInfoProp
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <Card className={`h-full border ${feature.borderColor}`} glow="gold">
-                <div
-                  className={`w-14 h-14 ${feature.bgColor} rounded-xl flex items-center justify-center mb-4`}
-                >
-                  <feature.icon className={`w-7 h-7 ${feature.color}`} />
-                </div>
-                <h3 className="text-lg font-display font-bold text-white mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-dota-muted text-sm leading-relaxed">
-                  {feature.description}
-                </p>
-              </Card>
+              <TiltCard tiltAmount={10} glowColor={feature.glow} className="h-full">
+                <Card className={`h-full border ${feature.borderColor}`} glow={feature.glow === "blue" || feature.glow === "purple" ? "gold" : feature.glow}>
+                  <div
+                    className={`w-14 h-14 ${feature.bgColor} rounded-xl flex items-center justify-center mb-4`}
+                  >
+                    <feature.icon className={`w-7 h-7 ${feature.color}`} />
+                  </div>
+                  <h3 className="text-lg font-display font-bold text-white mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-dota-muted text-sm leading-relaxed">
+                    {feature.description}
+                  </p>
+                </Card>
+              </TiltCard>
             </motion.div>
           ))}
         </div>

@@ -11,6 +11,7 @@ import { HallOfFame } from "@/components/sections/HallOfFame";
 import { Contacts } from "@/components/sections/Contacts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { MouseGlow3D } from "@/components/effects/MouseGlow3D";
 import { getTournament, getPublicStats } from "@/server/actions/tournament";
 import { getTeams } from "@/server/actions/team";
 import { trackVisit } from "@/server/actions/visit";
@@ -30,6 +31,7 @@ export default async function Home({
 
   return (
     <>
+      <MouseGlow3D />
       <Header />
       <main>
         <Hero

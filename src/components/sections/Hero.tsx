@@ -5,6 +5,10 @@ import { motion } from "framer-motion";
 import { Calendar, Trophy, Users, Globe } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { TiltCard } from "@/components/effects/TiltCard";
+import { FloatingRunes3D } from "@/components/effects/FloatingRunes3D";
+import { AegisEmblem3D } from "@/components/effects/AegisEmblem3D";
+import { Text3D } from "@/components/effects/Text3D";
 
 interface HeroProps {
   tournamentDate: Date;
@@ -37,18 +41,20 @@ function calculateTimeLeft(targetDate: Date): TimeLeft {
 
 function CountdownUnit({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 bg-dota-surface/80 border border-dota-gold/40 rounded-lg flex items-center justify-center shadow-glow-gold-sm backdrop-blur-sm">
-        <span className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-white">
-          {String(value).padStart(2, "0")}
+    <TiltCard tiltAmount={15} glareEnabled={false} glowColor="gold">
+      <div className="flex flex-col items-center">
+        <div className="relative w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 bg-dota-surface/80 border border-dota-gold/40 rounded-lg flex items-center justify-center shadow-glow-gold-sm backdrop-blur-sm">
+          <span className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-white">
+            {String(value).padStart(2, "0")}
+          </span>
+          <div className="absolute inset-0 bg-gradient-to-b from-dota-gold/10 to-transparent rounded-lg pointer-events-none" />
+          <div className="absolute -inset-0.5 bg-gradient-to-b from-dota-gold/20 to-dota-red/20 rounded-lg blur-sm -z-10" />
+        </div>
+        <span className="mt-2 text-xs md:text-sm text-dota-muted uppercase tracking-wider">
+          {label}
         </span>
-        <div className="absolute inset-0 bg-gradient-to-b from-dota-gold/10 to-transparent rounded-lg pointer-events-none" />
-        <div className="absolute -inset-0.5 bg-gradient-to-b from-dota-gold/20 to-dota-red/20 rounded-lg blur-sm -z-10" />
       </div>
-      <span className="mt-2 text-xs md:text-sm text-dota-muted uppercase tracking-wider">
-        {label}
-      </span>
-    </div>
+    </TiltCard>
   );
 }
 
@@ -99,6 +105,13 @@ export function Hero({ tournamentDate, prizePool, format, server }: HeroProps) {
     if (element) element.scrollIntoView({ behavior: "smooth" });
   };
 
+  const statCards = [
+    { icon: Calendar, label: "Дата", value: formattedDate, glow: "red" as const },
+    { icon: Trophy, label: "Призовой фонд", value: prizePool, glow: "gold" as const },
+    { icon: Users, label: "Формат", value: format, glow: "red" as const },
+    { icon: Globe, label: "Сервер", value: server, glow: "gold" as const },
+  ];
+
   return (
     <section
       id="hero"
@@ -128,6 +141,9 @@ export function Hero({ tournamentDate, prizePool, format, server }: HeroProps) {
       >
         <img src="/svgs/rune-circle.svg" alt="" className="w-full h-full" />
       </motion.div>
+
+      {/* 3D Floating Runes */}
+      <FloatingRunes3D count={20} className="z-[1]" />
 
       {/* Hero silhouette */}
       <motion.div
@@ -160,14 +176,9 @@ export function Hero({ tournamentDate, prizePool, format, server }: HeroProps) {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="mb-6"
+            className="mb-6 flex justify-center"
           >
-            <img 
-              src="/svgs/hero-emblem.svg" 
-              alt="RUSSIAN CUP" 
-              className="w-20 h-20 md:w-28 md:h-28 mx-auto"
-              style={{ filter: "drop-shadow(0 0 20px rgba(229, 57, 53, 0.5))" }}
-            />
+            <AegisEmblem3D size={120} className="md:w-40 md:h-40" />
           </motion.div>
 
           <motion.h1
@@ -176,8 +187,14 @@ export function Hero({ tournamentDate, prizePool, format, server }: HeroProps) {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-display font-bold mb-4 tracking-tight text-glow"
           >
-            <span className="text-white">RUSSIAN</span>
-            <span className="block gradient-text">CUP SEASON 1</span>
+            <Text3D as="span" color="white" depth={5}>
+              RUSSIAN
+            </Text3D>
+            <span className="block gradient-text">
+              <Text3D as="span" color="gold" depth={5}>
+                CUP SEASON 1
+              </Text3D>
+            </span>
           </motion.h1>
 
           <motion.p
@@ -237,26 +254,15 @@ export function Hero({ tournamentDate, prizePool, format, server }: HeroProps) {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto"
           >
-            <Card className="text-center py-5 border-glow" glow="red">
-              <Calendar className="w-6 h-6 text-dota-red mx-auto mb-2" />
-              <p className="text-xs text-dota-muted uppercase">Дата</p>
-              <p className="font-display font-bold text-white">{formattedDate}</p>
-            </Card>
-            <Card className="text-center py-5 border-glow" glow="gold">
-              <Trophy className="w-6 h-6 text-dota-gold mx-auto mb-2" />
-              <p className="text-xs text-dota-muted uppercase">Призовой фонд</p>
-              <p className="font-display font-bold text-white">{prizePool}</p>
-            </Card>
-            <Card className="text-center py-5 border-glow" glow="red">
-              <Users className="w-6 h-6 text-dota-red mx-auto mb-2" />
-              <p className="text-xs text-dota-muted uppercase">Формат</p>
-              <p className="font-display font-bold text-white">{format}</p>
-            </Card>
-            <Card className="text-center py-5 border-glow" glow="gold">
-              <Globe className="w-6 h-6 text-dota-gold mx-auto mb-2" />
-              <p className="text-xs text-dota-muted uppercase">Сервер</p>
-              <p className="font-display font-bold text-white">{server}</p>
-            </Card>
+            {statCards.map((stat) => (
+              <TiltCard key={stat.label} tiltAmount={12} glowColor={stat.glow}>
+                <Card className="text-center py-5 border-glow" glow={stat.glow}>
+                  <stat.icon className={`w-6 h-6 text-dota-${stat.glow === "red" ? "red" : "gold"} mx-auto mb-2`} />
+                  <p className="text-xs text-dota-muted uppercase">{stat.label}</p>
+                  <p className="font-display font-bold text-white">{stat.value}</p>
+                </Card>
+              </TiltCard>
+            ))}
           </motion.div>
         </div>
       </div>
