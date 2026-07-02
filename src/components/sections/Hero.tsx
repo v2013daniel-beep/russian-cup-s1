@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Trophy, Users, Globe } from "lucide-react";
+import { randomFromSeed } from "@/lib/random";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TiltCard } from "@/components/effects/TiltCard";
@@ -66,11 +67,11 @@ function ParticlesBackground() {
           key={i}
           className="particle"
           style={{
-            left: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 8}s`,
-            animationDuration: `${6 + Math.random() * 6}s`,
-            width: `${1 + Math.random() * 2}px`,
-            height: `${1 + Math.random() * 2}px`,
+            left: `${randomFromSeed(i * 41, 0, 100)}%`,
+            animationDelay: `${randomFromSeed(i * 43, 0, 8)}s`,
+            animationDuration: `${randomFromSeed(i * 47, 6, 12)}s`,
+            width: `${randomFromSeed(i * 53, 1, 3)}px`,
+            height: `${randomFromSeed(i * 59, 1, 3)}px`,
           }}
         />
       ))}

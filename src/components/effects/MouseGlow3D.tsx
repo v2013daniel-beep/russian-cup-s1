@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, useSpring } from "framer-motion";
+import { motion, useSpring, useMotionTemplate } from "framer-motion";
 
 export function MouseGlow3D() {
   const [isMounted, setIsMounted] = useState(false);
   const mouseX = useSpring(0, { stiffness: 50, damping: 20 });
   const mouseY = useSpring(0, { stiffness: 50, damping: 20 });
+
+  const background = useMotionTemplate`
+    radial-gradient(600px circle at ${mouseX}px ${mouseY}px, rgba(229,57,53,0.08), transparent 40%)
+  `;
 
   useEffect(() => {
     setIsMounted(true);
@@ -26,13 +30,7 @@ export function MouseGlow3D() {
     <>
       <motion.div
         className="fixed inset-0 pointer-events-none z-30"
-        style={{
-          background: useMotionTemplate(
-            mouseX,
-            mouseY,
-            "radial-gradient(600px circle at {x}px {y}px, rgba(229,57,53,0.08), transparent 40%)"
-          ),
-        }}
+        style={{ background }}
       />
       <motion.div
         className="fixed w-64 h-64 rounded-full pointer-events-none z-20"
@@ -47,27 +45,4 @@ export function MouseGlow3D() {
       />
     </>
   );
-}
-
-function useMotionTemplate(x: any, y: any, template: string) {
-  const [value, setValue] = useState("");
-
-  useEffect(() => {
-    const unsubscribeX = x.on("change", (latestX: number) => {
-      const latestY = y.get();
-      setValue(template.replace("{x}", String(latestX)).replace("{y}", String(latestY)));
-    });
-
-    const unsubscribeY = y.on("change", (latestY: number) => {
-      const latestX = x.get();
-      setValue(template.replace("{x}", String(latestX)).replace("{y}", String(latestY)));
-    });
-
-    return () => {
-      unsubscribeX();
-      unsubscribeY();
-    };
-  }, [x, y, template]);
-
-  return value;
 }

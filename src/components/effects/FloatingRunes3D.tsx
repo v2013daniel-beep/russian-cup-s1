@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { seededRandom, randomFromSeed } from "@/lib/random";
 
 const runes = ["ᚠ", "ᚢ", "ᚦ", "ᚨ", "ᚱ", "ᚲ", "ᚷ", "ᚹ", "ᚺ", "ᚾ", "ᛁ", "ᛃ"];
 
@@ -13,13 +14,13 @@ export function FloatingRunes3D({ count = 15, className }: FloatingRunes3DProps)
   const particles = Array.from({ length: count }, (_, i) => ({
     id: i,
     rune: runes[i % runes.length],
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    size: 16 + Math.random() * 32,
-    duration: 15 + Math.random() * 20,
-    delay: Math.random() * -20,
-    depth: Math.random() * 200 - 100,
-    rotateDuration: 8 + Math.random() * 12,
+    x: randomFromSeed(i * 7, 0, 100),
+    y: randomFromSeed(i * 13 + 1, 0, 100),
+    size: randomFromSeed(i * 19 + 2, 16, 48),
+    duration: randomFromSeed(i * 23 + 3, 15, 35),
+    delay: -randomFromSeed(i * 29 + 4, 0, 20),
+    depth: randomFromSeed(i * 31 + 5, -100, 100),
+    rotateDuration: randomFromSeed(i * 37 + 6, 8, 20),
   }));
 
   return (
