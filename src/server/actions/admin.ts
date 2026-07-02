@@ -1,133 +1,208 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { SignJWT, jwtVerify } from "jose";
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { createAdminSession, destroyAdminSession, verifyAdminSession } from "@/lib/auth";
-import { exportTeamsToExcel } from "@/lib/export";
-import { startOfDay, endOfDay } from "date-fns";
+import { isMockMode, mockStats, mockTeams, mockTournament } from "@/lib/mock";
 
-export async function adminLogin(password: string) {
+function getSecret() {
+  return new TextEncoder().encode(process.env.JWT_SECRET || "demo-secret");
+}
+
+async function createToken(payload: object) {
+  return new SignJWT(payload as Record<string, unknown>)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("8h")
+    .sign(getSecret());
+}
+
+async function verifyToken(token: string) {
   try {
-    await createAdminSession(password);
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: "Неверный пароль" };
+    await jwtVerify(token, getSecret());
+    return true;
+  } catch {
+    return false;
   }
 }
 
+// Client-facing names used by UI
+export async function adminLogin(password: string) {
+  return loginAdmin(password);
+}
+
 export async function adminLogout() {
-  await destroyAdminSession();
+  cookies().delete("admin-token");
+}
+
+export async function checkAdminAuth(): Promise<boolean> {
+  const token = cookies().get("admin-token")?.value;
+  if (!token) return false;
+  return verifyToken(token);
+}
+
+export async function loginAdmin(password: string) {
+  if (isMockMode()) {
+    if (password === "demo123") {
+      const token = await createToken({ admin: true });
+      cookies().set("admin-token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 8,
+        path: "/",
+      });
+      return { success: true };
+    }
+    return { success: false, error: "Неверный пароль" };
+  }
+
+  const admin = await prisma.admin.findFirst();
+
+  if (!admin) {
+    throw new Error("Админ не настроен");
+  }
+
+  const { compare } = await import("bcryptjs");
+  const isValid = await compare(password, admin.password);
+
+  if (!isValid) {
+    return { success: false, error: "Неверный пароль" };
+  }
+
+  const token = await createToken({ adminId: admin.id });
+
+  cookies().set("admin-token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 8,
+    path: "/",
+  });
+
   return { success: true };
 }
 
-export async function checkAdminAuth() {
-  return verifyAdminSession();
-}
-
 export async function getDashboardStats() {
-  const isAdmin = await verifyAdminSession();
-  if (!isAdmin) throw new Error("Unauthorized");
+  if (isMockMode()) {
+    return mockStats;
+  }
+
+  const tournament = await prisma.tournament.findUnique({
+    where: { id: "default" },
+  });
 
   const today = new Date();
-  const todayStart = startOfDay(today);
-  const todayEnd = endOfDay(today);
+  today.setHours(0, 0, 0, 0);
 
-  const [
-    visitsToday,
-    visitsTotal,
-    totalTeams,
-    paidTeams,
-    pendingTeams,
-    totalRevenue,
-  ] = await Promise.all([
-    prisma.visit.count({
-      where: { date: { gte: todayStart, lte: todayEnd } },
-    }),
-    prisma.visit.count(),
-    prisma.team.count(),
-    prisma.team.count({ where: { status: "paid" } }),
-    prisma.team.count({ where: { status: "pending" } }),
-    prisma.payment.aggregate({
-      where: { status: "success" },
-      _sum: { amount: true },
-    }),
-  ]);
+  const [totalTeams, paidTeams, pendingTeams, visitsToday, visitsTotal] =
+    await Promise.all([
+      prisma.team.count(),
+      prisma.team.count({ where: { status: "paid" } }),
+      prisma.team.count({ where: { status: "pending" } }),
+      prisma.visit.count({ where: { date: { gte: today } } }),
+      prisma.visit.count(),
+    ]);
 
   return {
-    visitsToday,
-    visitsTotal,
     totalTeams,
     paidTeams,
     pendingTeams,
-    totalRevenue: totalRevenue._sum.amount || 0,
+    visitsToday,
+    visitsTotal,
+    totalRevenue: paidTeams * (tournament?.entryFee || 0),
   };
 }
 
 export async function getAdminTeams() {
-  const isAdmin = await verifyAdminSession();
-  if (!isAdmin) throw new Error("Unauthorized");
+  if (isMockMode()) {
+    return mockTeams.map((team) => ({
+      ...team,
+      substitute: null,
+      captainName: "Demo",
+      captainNickname: "demo_captain",
+      captainTelegram: "@demo",
+      captainDiscord: "demo#0000",
+      captainEmail: "demo@example.com",
+      payment: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+  }
 
-  const teams = await prisma.team.findMany({
-    include: { players: { orderBy: { order: "asc" } }, payment: true },
+  return prisma.team.findMany({
+    include: {
+      players: { orderBy: { order: "asc" } },
+      payment: true,
+    },
     orderBy: { createdAt: "desc" },
   });
-
-  return teams.map((team) => ({
-    ...team,
-    createdAt: team.createdAt.toISOString(),
-    updatedAt: team.updatedAt.toISOString(),
-    payment: team.payment
-      ? {
-          ...team.payment,
-          paidAt: team.payment.paidAt?.toISOString() || null,
-          createdAt: team.payment.createdAt.toISOString(),
-          updatedAt: team.payment.updatedAt.toISOString(),
-        }
-      : null,
-  }));
 }
 
 export async function updateTeamStatus(teamId: string, status: string) {
-  const isAdmin = await verifyAdminSession();
-  if (!isAdmin) throw new Error("Unauthorized");
+  if (isMockMode()) {
+    revalidatePath("/admin");
+    revalidatePath("/admin/teams");
+    return { success: true };
+  }
 
   await prisma.team.update({
     where: { id: teamId },
-    data: { status },
+    data: { status: status as any },
   });
 
-  revalidatePath("/");
+  revalidatePath("/admin");
   revalidatePath("/admin/teams");
+
   return { success: true };
 }
 
 export async function deleteTeam(teamId: string) {
-  const isAdmin = await verifyAdminSession();
-  if (!isAdmin) throw new Error("Unauthorized");
+  if (isMockMode()) {
+    revalidatePath("/admin");
+    revalidatePath("/admin/teams");
+    return { success: true };
+  }
 
-  await prisma.team.delete({ where: { id: teamId } });
+  await prisma.team.delete({
+    where: { id: teamId },
+  });
 
-  revalidatePath("/");
+  revalidatePath("/admin");
   revalidatePath("/admin/teams");
+
   return { success: true };
 }
 
 export async function getAdminSettings() {
-  const isAdmin = await verifyAdminSession();
-  if (!isAdmin) throw new Error("Unauthorized");
+  if (isMockMode()) {
+    return {
+      ...mockTournament,
+      discord: mockTournament.contacts.discord,
+      telegram: mockTournament.contacts.telegram,
+      email: mockTournament.contacts.email,
+      responseTime: mockTournament.contacts.responseTime,
+    };
+  }
 
   const tournament = await prisma.tournament.findUnique({
     where: { id: "default" },
     include: { contacts: true },
   });
 
-  if (!tournament) throw new Error("Tournament not found");
+  if (!tournament) {
+    throw new Error("Tournament not found");
+  }
 
   return {
-    ...tournament,
+    name: tournament.name,
     date: tournament.date.toISOString().slice(0, 16),
-    createdAt: tournament.createdAt.toISOString(),
-    updatedAt: tournament.updatedAt.toISOString(),
+    prizePool: tournament.prizePool,
+    entryFee: tournament.entryFee,
+    format: tournament.format,
+    server: tournament.server,
+    registrationOpen: tournament.registrationOpen,
     discord: tournament.contacts?.discord || "",
     telegram: tournament.contacts?.telegram || "",
     email: tournament.contacts?.email || "",
@@ -148,8 +223,111 @@ export async function updateSettings(data: {
   email: string;
   responseTime: string;
 }) {
-  const isAdmin = await verifyAdminSession();
-  if (!isAdmin) throw new Error("Unauthorized");
+  return updateTournament({
+    name: data.name,
+    date: data.date,
+    prizePool: data.prizePool,
+    entryFee: data.entryFee,
+    format: data.format,
+    server: data.server,
+    registrationOpen: data.registrationOpen,
+    contacts: {
+      discord: data.discord,
+      telegram: data.telegram,
+      email: data.email,
+      responseTime: data.responseTime,
+    },
+  });
+}
+
+export async function toggleRegistration() {
+  if (isMockMode()) {
+    revalidatePath("/admin");
+    revalidatePath("/");
+    return { success: true, registrationOpen: !mockTournament.registrationOpen };
+  }
+
+  const tournament = await prisma.tournament.findUnique({
+    where: { id: "default" },
+  });
+
+  if (!tournament) {
+    throw new Error("Tournament not found");
+  }
+
+  await prisma.tournament.update({
+    where: { id: "default" },
+    data: { registrationOpen: !tournament.registrationOpen },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+
+  return { success: true };
+}
+
+export async function exportTeams() {
+  if (isMockMode()) {
+    const XLSX = await import("xlsx");
+    const data = mockTeams.map((team) => ({
+      "Название": team.teamName,
+      "Тег": team.teamTag,
+      "Статус": team.status,
+      "Игроки": team.players.map((p) => `${p.nickname} (${p.mmr})`).join(", "),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Teams");
+
+    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    return Buffer.from(buf).toString("base64");
+  }
+
+  const teams = await prisma.team.findMany({
+    include: { players: { orderBy: { order: "asc" } } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const XLSX = await import("xlsx");
+  const data = teams.map((team) => ({
+    "Название": team.teamName,
+    "Тег": team.teamTag,
+    "Статус": team.status,
+    "Капитан": team.captainName,
+    "Telegram": team.captainTelegram,
+    "Email": team.captainEmail,
+    "Игроки": team.players.map((p) => `${p.nickname} (${p.mmr})`).join(", "),
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Teams");
+
+  const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+  return Buffer.from(buf).toString("base64");
+}
+
+export async function updateTournament(data: {
+  name: string;
+  date: string;
+  prizePool: string;
+  entryFee: number;
+  format: string;
+  server: string;
+  registrationOpen: boolean;
+  contacts: {
+    discord: string;
+    telegram: string;
+    email: string;
+    responseTime: string;
+  };
+}) {
+  if (isMockMode()) {
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { success: true };
+  }
 
   await prisma.tournament.update({
     where: { id: "default" },
@@ -163,18 +341,8 @@ export async function updateSettings(data: {
       registrationOpen: data.registrationOpen,
       contacts: {
         upsert: {
-          create: {
-            discord: data.discord,
-            telegram: data.telegram,
-            email: data.email,
-            responseTime: data.responseTime,
-          },
-          update: {
-            discord: data.discord,
-            telegram: data.telegram,
-            email: data.email,
-            responseTime: data.responseTime,
-          },
+          create: data.contacts,
+          update: data.contacts,
         },
       },
     },
@@ -182,33 +350,6 @@ export async function updateSettings(data: {
 
   revalidatePath("/");
   revalidatePath("/admin");
-  revalidatePath("/admin/settings");
+
   return { success: true };
-}
-
-export async function exportTeams() {
-  const isAdmin = await verifyAdminSession();
-  if (!isAdmin) throw new Error("Unauthorized");
-
-  return exportTeamsToExcel();
-}
-
-export async function toggleRegistration() {
-  const isAdmin = await verifyAdminSession();
-  if (!isAdmin) throw new Error("Unauthorized");
-
-  const tournament = await prisma.tournament.findUnique({
-    where: { id: "default" },
-  });
-
-  if (!tournament) throw new Error("Tournament not found");
-
-  await prisma.tournament.update({
-    where: { id: "default" },
-    data: { registrationOpen: !tournament.registrationOpen },
-  });
-
-  revalidatePath("/");
-  revalidatePath("/admin");
-  return { success: true, registrationOpen: !tournament.registrationOpen };
 }

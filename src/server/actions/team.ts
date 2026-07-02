@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { notifyAdmin } from "@/lib/telegram";
+import { isMockMode, mockTeams } from "@/lib/mock";
 
 export interface PlayerInput {
   nickname: string;
@@ -25,6 +26,12 @@ export interface TeamInput {
 }
 
 export async function createTeam(data: TeamInput) {
+  if (isMockMode()) {
+    // Demo mode: just log and return success
+    console.log("Demo registration:", data.teamName);
+    return { success: true, teamId: "demo-team-id" };
+  }
+
   const tournament = await prisma.tournament.findUnique({
     where: { id: "default" },
   });
@@ -92,6 +99,14 @@ export async function createTeam(data: TeamInput) {
 }
 
 export async function getTeams() {
+  if (isMockMode()) {
+    return mockTeams.map((team) => ({
+      ...team,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
   const teams = await prisma.team.findMany({
     include: { players: { orderBy: { order: "asc" } }, payment: true },
     orderBy: { createdAt: "desc" },

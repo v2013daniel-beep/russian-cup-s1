@@ -1,6 +1,4 @@
 {
-  "buildCommand": "prisma generate && prisma migrate deploy && next build",
-  "framework": "nextjs",
-  "installCommand": "npm install",
-  "regions": ["fra1"]
+  "buildCommand": "if [ \"$MOCK_MODE\" = \"true\" ]; then prisma generate && next build; else prisma migrate deploy && prisma generate && next build; fi",
+  "framework": "nextjs"
 }

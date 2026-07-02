@@ -1,9 +1,18 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { buildRobokassaUrl } from "@/lib/robokassa";
+import crypto from "crypto";
+import { isMockMode } from "@/lib/mock";
 
 export async function createRobokassaPayment(teamId: string) {
+  return createPaymentUrl(teamId);
+}
+
+export async function createPaymentUrl(teamId: string) {
+  if (isMockMode()) {
+    return { url: "#demo-payment", invoiceId: "demo-invoice" };
+  }
+
   const team = await prisma.team.findUnique({
     where: { id: teamId },
     include: { payment: true },
@@ -13,30 +22,39 @@ export async function createRobokassaPayment(teamId: string) {
     throw new Error("Команда не найдена");
   }
 
-  if (!team.payment) {
-    throw new Error("Платёж не найден");
+  const tournament = await prisma.tournament.findUnique({
+    where: { id: "default" },
+  });
+
+  if (!tournament) {
+    throw new Error("Турнир не найден");
   }
 
-  const merchantLogin = process.env.ROBOKASSA_MERCHANT_LOGIN;
-  const password1 = process.env.ROBOKASSA_PASSWORD_1;
+  const payment = team.payment || (await prisma.payment.create({
+    data: {
+      teamId: team.id,
+      amount: tournament.entryFee,
+      method: "robokassa",
+      status: "pending",
+    },
+  }));
 
-  if (!merchantLogin || !password1) {
-    throw new Error("Robokassa не настроена");
-  }
+  const outSum = tournament.entryFee.toString();
+  const invId = payment.id;
+  const description = encodeURIComponent(`Регистрация ${team.teamName}`);
+  const signatureValue = crypto
+    .createHash("md5")
+    .update(`${process.env.ROBOKASSA_MERCHANT_LOGIN}:${outSum}:${invId}:${process.env.ROBOKASSA_PASSWORD_1}`)
+    .digest("hex");
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const testMode = process.env.ROBOKASSA_TEST_MODE === "1";
+  const url =
+    `https://auth.robokassa.ru/Merchant/Index.aspx?` +
+    `MerchantLogin=${process.env.ROBOKASSA_MERCHANT_LOGIN}&` +
+    `OutSum=${outSum}&` +
+    `InvId=${invId}&` +
+    `Description=${description}&` +
+    `SignatureValue=${signatureValue}&` +
+    `IsTest=1`;
 
-  const url = buildRobokassaUrl(
-    merchantLogin,
-    team.payment.amount,
-    team.payment.id,
-    `Участие команды ${team.teamName} в RUSSIAN CUP SEASON 1`,
-    password1,
-    testMode,
-    `${appUrl}/api/payment/success`,
-    `${appUrl}/api/payment/result`
-  );
-
-  return { url };
+  return { url, invoiceId: invId };
 }

@@ -1,8 +1,18 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { isMockMode, mockTournament } from "@/lib/mock";
 
 export async function getTournament() {
+  if (isMockMode()) {
+    return {
+      ...mockTournament,
+      date: mockTournament.date,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
   const tournament = await prisma.tournament.findUnique({
     where: { id: "default" },
     include: { contacts: true },
@@ -21,6 +31,13 @@ export async function getTournament() {
 }
 
 export async function getPublicStats() {
+  if (isMockMode()) {
+    return {
+      totalTeams: mockTournament.registrationOpen ? 4 : 0,
+      paidTeams: 2,
+    };
+  }
+
   const [totalTeams, paidTeams] = await Promise.all([
     prisma.team.count(),
     prisma.team.count({ where: { status: "paid" } }),
