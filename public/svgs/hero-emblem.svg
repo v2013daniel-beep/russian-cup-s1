@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="emblemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="50%" stop-color="#E53935"/>
+      <stop offset="100%" stop-color="#B8860B"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="95" stroke="url(#emblemGrad)" stroke-width="2" opacity="0.8"/>
+  <circle cx="100" cy="100" r="85" stroke="url(#emblemGrad)" stroke-width="1" opacity="0.4"/>
+  <path d="M100 30 L115 75 L165 75 L125 105 L140 150 L100 120 L60 150 L75 105 L35 75 L85 75 Z" fill="url(#emblemGrad)" opacity="0.9"/>
+  <circle cx="100" cy="100" r="25" fill="#0A0A0A" stroke="url(#emblemGrad)" stroke-width="3"/>
+  <text x="100" y="108" text-anchor="middle" fill="url(#emblemGrad)" font-size="22" font-weight="bold" font-family="Oswald, sans-serif">RC</text>
+</svg>

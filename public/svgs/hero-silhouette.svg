@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" fill="none">
+  <defs>
+    <linearGradient id="silGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E53935" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#0A0A0A" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0A0A0A" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+  <path d="M200 50 
+    C230 60 250 90 245 130 
+    C260 140 270 160 265 190
+    C290 200 310 230 300 270
+    C320 290 330 330 315 380
+    C325 420 310 470 290 520
+    L260 600 L140 600 L110 520
+    C90 470 75 420 85 380
+    C70 330 80 290 100 270
+    C90 230 110 200 135 190
+    C130 160 140 140 155 130
+    C150 90 170 60 200 50Z" 
+    fill="url(#silGrad)"/>
+  <path d="M200 50 C210 80 205 120 200 150" stroke="#FFD700" stroke-width="2" opacity="0.5"/>
+  <circle cx="200" cy="110" r="15" fill="#FFD700" opacity="0.8"/>
+  <path d="M120 280 L80 350 L110 360 L140 290Z" fill="#0A0A0A" opacity="0.7"/>
+  <path d="M280 280 L320 350 L290 360 L260 290Z" fill="#0A0A0A" opacity="0.7"/>
+</svg>

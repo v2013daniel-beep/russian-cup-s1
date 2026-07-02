@@ -1,0 +1,211 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap');
+
+:root {
+  --dota-black: #050505;
+  --dota-void: #0A0A0A;
+  --dota-surface: #111111;
+  --dota-panel: #1A1A1A;
+  --dota-red: #E53935;
+  --dota-red-bright: #FF2A2A;
+  --dota-gold: #FFD700;
+  --dota-gold-dim: #D4AF37;
+  --dota-gold-dark: #B8860B;
+  --dota-text: #F5F5F5;
+  --dota-muted: #A0A0A0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--dota-black);
+  color: var(--dota-text);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dota-void);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--dota-gold), var(--dota-red));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--dota-red), var(--dota-gold));
+}
+
+/* Noise texture overlay */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Sparkle / particle background */
+.particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--dota-gold);
+  border-radius: 50%;
+  opacity: 0;
+  animation: rise 8s infinite ease-in;
+}
+
+@keyframes rise {
+  0% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-10vh) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(2deg); }
+}
+
+/* Pulse glow */
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(229, 57, 53, 0.4)); }
+  50% { filter: drop-shadow(0 0 40px rgba(229, 57, 53, 0.8)); }
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #FFD700 0%, #FF6A00 30%, #E53935 70%, #FFD700 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 4s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Glow effects */
+.glow-red {
+  box-shadow: 0 0 30px rgba(229, 57, 53, 0.4);
+}
+
+.glow-gold {
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+}
+
+/* Shimmer button effect */
+.btn-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
+/* Glass panel */
+.glass-panel {
+  background: rgba(17, 17, 17, 0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 215, 0, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Decorative divider */
+.section-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #E53935 30%, #FFD700 50%, #E53935 70%, transparent 100%);
+  opacity: 0.6;
+}
+
+/* Hero image overlay */
+.hero-image-overlay {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 50% 0%, rgba(229, 57, 53, 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 40%),
+    linear-gradient(to bottom, rgba(5, 5, 5, 0.3) 0%, rgba(5, 5, 5, 0.85) 70%, var(--dota-black) 100%);
+}
+
+/* Vignette effect */
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.7) 100%);
+  pointer-events: none;
+}
+
+/* Form focus */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--dota-red);
+  box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.2);
+}
+
+/* Image treatment */
+.dota-image {
+  filter: saturate(0.9) contrast(1.1);
+}
+
+/* Animated border */
+@keyframes border-glow {
+  0%, 100% { border-color: rgba(255, 215, 0, 0.2); }
+  50% { border-color: rgba(229, 57, 53, 0.5); }
+}
+
+.border-glow {
+  animation: border-glow 3s ease-in-out infinite;
+}
+
+/* Text shadow for headings */
+.text-glow {
+  text-shadow: 0 0 40px rgba(229, 57, 53, 0.5), 0 0 80px rgba(255, 215, 0, 0.2);
+}

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <defs>
+    <linearGradient id="runeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#E53935" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+  <circle cx="200" cy="200" r="180" stroke="url(#runeGrad)" stroke-width="1"/>
+  <circle cx="200" cy="200" r="150" stroke="url(#runeGrad)" stroke-width="1" stroke-dasharray="20 10"/>
+  <circle cx="200" cy="200" r="120" stroke="url(#runeGrad)" stroke-width="2"/>
+  <path d="M200 20 L215 80 L200 100 L185 80 Z" fill="#FFD700" opacity="0.4"/>
+  <path d="M200 380 L215 320 L200 300 L185 320 Z" fill="#FFD700" opacity="0.4"/>
+  <path d="M20 200 L80 215 L100 200 L80 185 Z" fill="#FFD700" opacity="0.4"/>
+  <path d="M380 200 L320 215 L300 200 L320 185 Z" fill="#FFD700" opacity="0.4"/>
+  <circle cx="200" cy="200" r="60" stroke="#E53935" stroke-width="2" opacity="0.3"/>
+  <path d="M200 160 L220 200 L200 240 L180 200 Z" fill="#E53935" opacity="0.2"/>
+</svg>

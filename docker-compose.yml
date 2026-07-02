@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: russian-cup-s1
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./prisma/prod.db
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - ROBOKASSA_MERCHANT_LOGIN=${ROBOKASSA_MERCHANT_LOGIN}
+      - ROBOKASSA_PASSWORD_1=${ROBOKASSA_PASSWORD_1}
+      - ROBOKASSA_PASSWORD_2=${ROBOKASSA_PASSWORD_2}
+      - ROBOKASSA_TEST_MODE=${ROBOKASSA_TEST_MODE:-1}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_ADMIN_CHAT_ID=${TELEGRAM_ADMIN_CHAT_ID}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - ./prisma-data:/app/prisma
+    networks:
+      - russian-cup-network
+
+  # Optional: Nginx reverse proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: russian-cup-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - app
+    networks:
+      - russian-cup-network
+
+networks:
+  russian-cup-network:
+    driver: bridge
