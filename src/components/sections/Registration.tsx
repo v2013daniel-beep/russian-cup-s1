@@ -7,15 +7,15 @@ import { SectionTitle } from "@/components/ui/SectionTitle";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
-import { createTeam, PlayerInput } from "@/server/actions/team";
-import { createRobokassaPayment } from "@/server/actions/payment";
+import { useSiteData } from "@/hooks/useSiteData";
+import { type Player } from "@/lib/data";
 
 interface RegistrationProps {
   entryFee: number;
   registrationOpen: boolean;
 }
 
-const initialPlayer: PlayerInput = {
+const initialPlayer: Player = {
   nickname: "",
   mmr: "",
   dotabuff: "",
@@ -23,13 +23,14 @@ const initialPlayer: PlayerInput = {
 };
 
 export function Registration({ entryFee, registrationOpen }: RegistrationProps) {
-  const [players, setPlayers] = useState<PlayerInput[]>(
+  const { addRegistration } = useSiteData();
+  const [players, setPlayers] = useState<Player[]>(
     Array.from({ length: 5 }, () => ({ ...initialPlayer }))
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [teamId, setTeamId] = useState<string | null>(null);
+  const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -40,7 +41,7 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
     const formData = new FormData(e.currentTarget);
 
     try {
-      const result = await createTeam({
+      const result = addRegistration({
         teamName: formData.get("teamName") as string,
         teamTag: formData.get("teamTag") as string,
         playerCount: parseInt(formData.get("playerCount") as string) || 5,
@@ -53,7 +54,7 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
         players,
       });
 
-      setTeamId(result.teamId);
+      setRegistrationId(result.id);
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Произошла ошибка");
@@ -63,22 +64,20 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
   };
 
   const handlePayment = async (method: string) => {
-    if (!teamId) return;
+    if (!registrationId) return;
 
     setPaymentMethod(method);
 
     if (method === "robokassa") {
-      try {
-        const { url } = await createRobokassaPayment(teamId);
-        window.location.href = url;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Ошибка оплаты");
+      // Demo mode: no real payment
+      setTimeout(() => {
+        setError("В демо-режиме оплата недоступна. Свяжитесь с администрацией.");
         setPaymentMethod(null);
-      }
+      }, 500);
     }
   };
 
-  const updatePlayer = (index: number, field: keyof PlayerInput, value: string) => {
+  const updatePlayer = (index: number, field: keyof Player, value: string) => {
     setPlayers((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
@@ -86,7 +85,7 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
     });
   };
 
-  if (success && teamId) {
+  if (success && registrationId) {
     return (
       <section id="register" className="py-28 bg-dota-black relative overflow-hidden">
         <div 

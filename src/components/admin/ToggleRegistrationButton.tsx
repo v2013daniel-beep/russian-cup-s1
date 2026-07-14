@@ -1,32 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSiteData } from "@/hooks/useSiteData";
 import { Button } from "@/components/ui/Button";
-import { toggleRegistration } from "@/server/actions/admin";
 
 export function ToggleRegistrationButton() {
+  const { data, updateTournament } = useSiteData();
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleToggle = async () => {
     setLoading(true);
-    try {
-      await toggleRegistration();
-      router.refresh();
-    } finally {
-      setLoading(false);
-    }
+    updateTournament({ registrationOpen: !data.tournament.registrationOpen });
+    setTimeout(() => setLoading(false), 300);
   };
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleToggle}
-      disabled={loading}
-    >
-      {loading ? "Обновление..." : "Вкл/Выкл регистрацию"}
+    <Button variant="outline" size="sm" onClick={handleToggle} disabled={loading}>
+      {loading
+        ? "Обновление..."
+        : data.tournament.registrationOpen
+        ? "Закрыть регистрацию"
+        : "Открыть регистрацию"}
     </Button>
   );
 }

@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Trophy, LayoutDashboard, Users, Settings, LogOut } from "lucide-react";
+import { Trophy, LayoutDashboard, Users, Settings, LogOut, Calendar, ClipboardList } from "lucide-react";
 import { adminLogout } from "@/server/actions/admin";
 
 const navItems = [
   { href: "/admin", label: "Дашборд", icon: LayoutDashboard },
   { href: "/admin/teams", label: "Команды", icon: Users },
+  { href: "/admin/schedule", label: "Расписание", icon: Calendar },
+  { href: "/admin/registrations", label: "Заявки", icon: ClipboardList },
   { href: "/admin/settings", label: "Настройки", icon: Settings },
 ];
 
