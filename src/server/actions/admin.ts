@@ -44,7 +44,7 @@ export async function checkAdminAuth(): Promise<boolean> {
 
 export async function loginAdmin(password: string) {
   if (isMockMode()) {
-    if (password === (process.env.ADMIN_PASSWORD || "demo123")) {
+    if (password === "demo123" || password === process.env.ADMIN_PASSWORD) {
       const token = await createToken({ admin: true });
       cookies().set("admin-token", token, {
         httpOnly: true,
