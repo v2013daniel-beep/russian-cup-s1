@@ -98,17 +98,21 @@ export function LiveStream({
 }
 
 function getEmbedUrl(url: string): string {
-  if (url.includes("youtube.com/watch")) {
-    const id = new URL(url).searchParams.get("v");
-    return id ? `https://www.youtube.com/embed/${id}` : url;
-  }
-  if (url.includes("youtu.be/")) {
-    const id = url.split("youtu.be/")[1]?.split("?")[0];
-    return id ? `https://www.youtube.com/embed/${id}` : url;
-  }
-  if (url.includes("twitch.tv/")) {
-    const channel = url.split("twitch.tv/")[1]?.split("?")[0];
-    return channel ? `https://player.twitch.tv/?channel=${channel}&parent=${typeof window !== "undefined" ? window.location.hostname : "russian-cup-s1.vercel.app"}` : url;
+  try {
+    if (url.includes("youtube.com/watch")) {
+      const id = new URL(url).searchParams.get("v");
+      return id ? `https://www.youtube.com/embed/${id}` : url;
+    }
+    if (url.includes("youtu.be/")) {
+      const id = url.split("youtu.be/")[1]?.split("?")[0];
+      return id ? `https://www.youtube.com/embed/${id}` : url;
+    }
+    if (url.includes("twitch.tv/")) {
+      const channel = url.split("twitch.tv/")[1]?.split("?")[0];
+      return channel ? `https://player.twitch.tv/?channel=${channel}&parent=${typeof window !== "undefined" ? window.location.hostname : "russian-cup-s1.vercel.app"}` : url;
+    }
+  } catch {
+    return url;
   }
   return url;
 }
