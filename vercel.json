@@ -1,4 +1,4 @@
 {
-  "buildCommand": "prisma migrate deploy && prisma db seed && prisma generate && next build",
+  "buildCommand": "prisma migrate resolve --rolled-back 20260701210032_init || true && prisma migrate deploy && prisma db seed && prisma generate && next build",
   "framework": "nextjs"
 }
