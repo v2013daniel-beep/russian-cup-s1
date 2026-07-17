@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSiteData } from "@/hooks/useSiteData";
-import { checkAdminAuth } from "@/server/actions/admin";
+import { checkAdminAuth, getDashboardStats } from "@/server/actions/admin";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ToggleRegistrationButton } from "@/components/admin/ToggleRegistrationButton";
@@ -19,15 +19,28 @@ import {
 } from "lucide-react";
 import { isToday, isYesterday, startOfDay, subDays } from "date-fns";
 
+interface DashboardStats {
+  visitsToday: number;
+  visitsTotal: number;
+  totalTeams: number;
+  paidTeams: number;
+  pendingTeams: number;
+  totalRevenue: number;
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const { data } = useSiteData();
 
   useEffect(() => {
     checkAdminAuth().then((isAdmin) => {
       if (!isAdmin) router.push("/admin/login");
-      else setAuthChecked(true);
+      else {
+        setAuthChecked(true);
+        getDashboardStats().then(setStats);
+      }
     });
   }, [router]);
 
@@ -49,19 +62,22 @@ export default function AdminDashboardPage() {
     new Date(r.createdAt) >= subDays(startOfDay(new Date()), 7)
   ).length;
 
-  const visitsToday = data.visits.filter((v) => isToday(new Date(v.date))).length;
-  const visitsTotal = data.visits.length;
-  const paidTeams = data.teams.filter((t) => t.status === "paid").length;
-  const pendingTeams = data.teams.filter((t) => t.status === "pending").length;
-  const totalRevenue = paidTeams * data.tournament.entryFee;
+  const dashboardStats: DashboardStats = stats ?? {
+    visitsToday: 0,
+    visitsTotal: 0,
+    totalTeams: data.teams.length,
+    paidTeams: data.teams.filter((t) => t.status === "paid").length,
+    pendingTeams: data.teams.filter((t) => t.status === "pending").length,
+    totalRevenue: 0,
+  };
 
-  const stats = [
-    { title: "Посещения сегодня", value: visitsToday, icon: Eye, color: "text-blue-400", bgColor: "bg-blue-400/10" },
-    { title: "Всего посещений", value: visitsTotal, icon: TrendingUp, color: "text-dota-muted", bgColor: "bg-dota-muted/10" },
-    { title: "Всего команд", value: data.teams.length, icon: Users, color: "text-dota-red", bgColor: "bg-dota-red/10" },
-    { title: "Оплаченных заявок", value: paidTeams, icon: CreditCard, color: "text-dota-gold", bgColor: "bg-dota-gold/10" },
-    { title: "Не оплаченных", value: pendingTeams, icon: UserCheck, color: "text-orange-400", bgColor: "bg-orange-400/10" },
-    { title: "Общая выручка", value: `${totalRevenue.toLocaleString("ru-RU")} ₽`, icon: Wallet, color: "text-green-400", bgColor: "bg-green-400/10" },
+  const statsCards = [
+    { title: "Посещения сегодня", value: dashboardStats.visitsToday, icon: Eye, color: "text-blue-400", bgColor: "bg-blue-400/10" },
+    { title: "Всего посещений", value: dashboardStats.visitsTotal, icon: TrendingUp, color: "text-dota-muted", bgColor: "bg-dota-muted/10" },
+    { title: "Всего команд", value: dashboardStats.totalTeams, icon: Users, color: "text-dota-red", bgColor: "bg-dota-red/10" },
+    { title: "Оплаченных заявок", value: dashboardStats.paidTeams, icon: CreditCard, color: "text-dota-gold", bgColor: "bg-dota-gold/10" },
+    { title: "Не оплаченных", value: dashboardStats.pendingTeams, icon: UserCheck, color: "text-orange-400", bgColor: "bg-orange-400/10" },
+    { title: "Общая выручка", value: `${dashboardStats.totalRevenue.toLocaleString("ru-RU")} ₽`, icon: Wallet, color: "text-green-400", bgColor: "bg-green-400/10" },
   ];
 
   return (
@@ -72,7 +88,7 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {stats.map((stat) => (
+        {statsCards.map((stat) => (
           <StatCard
             key={stat.title}
             title={stat.title}

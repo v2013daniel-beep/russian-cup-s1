@@ -27,13 +27,12 @@ export interface TeamInput {
 
 export async function createTeam(data: TeamInput) {
   if (isMockMode()) {
-    // Demo mode: just log and return success
     console.log("Demo registration:", data.teamName);
     return { success: true, teamId: "demo-team-id" };
   }
 
-  const tournament = await prisma.tournament.findUnique({
-    where: { id: "default" },
+  const tournament = await prisma.tournament.findFirst({
+    orderBy: { createdAt: "desc" },
   });
 
   if (!tournament) {
@@ -94,6 +93,7 @@ export async function createTeam(data: TeamInput) {
 
   revalidatePath("/");
   revalidatePath("/admin/teams");
+  revalidatePath("/admin/registrations");
 
   return { success: true, teamId: team.id };
 }
@@ -125,4 +125,116 @@ export async function getTeams() {
         }
       : null,
   }));
+}
+
+export async function addTeam(data: TeamInput & { status?: "pending" | "paid" }) {
+  if (isMockMode()) {
+    revalidatePath("/admin/teams");
+    return { success: true, teamId: "demo-team-id" };
+  }
+
+  const tournament = await prisma.tournament.findFirst({
+    orderBy: { createdAt: "desc" },
+  });
+
+  const team = await prisma.team.create({
+    data: {
+      teamName: data.teamName,
+      teamTag: data.teamTag,
+      playerCount: data.playerCount,
+      substitute: data.substitute || null,
+      captainName: data.captainName,
+      captainNickname: data.captainNickname,
+      captainTelegram: data.captainTelegram,
+      captainDiscord: data.captainDiscord,
+      captainEmail: data.captainEmail,
+      status: data.status || "pending",
+      players: {
+        create: data.players.map((p, index) => ({
+          nickname: p.nickname,
+          mmr: p.mmr,
+          dotabuff: p.dotabuff,
+          steam: p.steam,
+          order: index,
+        })),
+      },
+    },
+  });
+
+  if (tournament) {
+    await prisma.payment.create({
+      data: {
+        teamId: team.id,
+        amount: tournament.entryFee,
+        method: "robokassa",
+        status: data.status === "paid" ? "success" : "pending",
+      },
+    });
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/teams");
+  revalidatePath("/admin/registrations");
+
+  return { success: true, teamId: team.id };
+}
+
+export async function updateTeam(teamId: string, data: Partial<TeamInput> & { status?: "pending" | "paid" }) {
+  if (isMockMode()) {
+    revalidatePath("/admin/teams");
+    return { success: true };
+  }
+
+  await prisma.team.update({
+    where: { id: teamId },
+    data: {
+      teamName: data.teamName,
+      teamTag: data.teamTag,
+      playerCount: data.playerCount,
+      substitute: data.substitute,
+      captainName: data.captainName,
+      captainNickname: data.captainNickname,
+      captainTelegram: data.captainTelegram,
+      captainDiscord: data.captainDiscord,
+      captainEmail: data.captainEmail,
+      status: data.status,
+    },
+  });
+
+  if (data.players) {
+    await prisma.player.deleteMany({ where: { teamId } });
+    await prisma.player.createMany({
+      data: data.players.map((p, index) => ({
+        teamId,
+        nickname: p.nickname,
+        mmr: p.mmr,
+        dotabuff: p.dotabuff,
+        steam: p.steam,
+        order: index,
+      })),
+    });
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/teams");
+  revalidatePath("/admin/registrations");
+
+  return { success: true };
+}
+
+export async function deleteTeam(teamId: string) {
+  if (isMockMode()) {
+    revalidatePath("/admin/teams");
+    return { success: true };
+  }
+
+  await prisma.team.delete({
+    where: { id: teamId },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin/teams");
+  revalidatePath("/admin/registrations");
+
+  return { success: true };
 }

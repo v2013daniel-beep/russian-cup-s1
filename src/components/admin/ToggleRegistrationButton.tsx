@@ -10,8 +10,8 @@ export function ToggleRegistrationButton() {
 
   const handleToggle = async () => {
     setLoading(true);
-    updateTournament({ registrationOpen: !data.tournament.registrationOpen });
-    setTimeout(() => setLoading(false), 300);
+    await updateTournament({ registrationOpen: !data.tournament.registrationOpen });
+    setLoading(false);
   };
 
   return (

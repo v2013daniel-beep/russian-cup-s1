@@ -45,7 +45,7 @@ export default function AdminSchedulePage() {
 
   const teamOptions = ["", ...data.teams.map((t) => t.teamName)];
 
-  const generateEmptyBracket = () => {
+  const generateEmptyBracket = async () => {
     const newMatches: Match[] = [];
     emptyBracketRounds.forEach(({ round, matches }) => {
       for (let i = 1; i <= matches; i++) {
@@ -57,10 +57,10 @@ export default function AdminSchedulePage() {
         });
       }
     });
-    setMatches(newMatches);
+    await setMatches(newMatches);
   };
 
-  const autoFillTeams = () => {
+  const autoFillTeams = async () => {
     const teams = data.teams.filter((t) => t.status === "paid").map((t) => t.teamName);
     if (teams.length < 4) {
       alert("Для автозаполнения нужно минимум 4 команды со статусом 'Оплачено'");
@@ -84,12 +84,12 @@ export default function AdminSchedulePage() {
         newMatches.push(match);
       }
     });
-    setMatches(newMatches);
+    await setMatches(newMatches);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Удалить матч?")) {
-      setMatches(data.matches.filter((m) => m.id !== id));
+      await setMatches(data.matches.filter((m) => m.id !== id));
     }
   };
 
@@ -103,9 +103,9 @@ export default function AdminSchedulePage() {
     });
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (editingId && editForm) {
-      updateMatch(editingId, {
+      await updateMatch(editingId, {
         ...editForm,
         scheduledAt: editForm.scheduledAt ? new Date(editForm.scheduledAt).toISOString() : undefined,
       });
@@ -114,7 +114,7 @@ export default function AdminSchedulePage() {
     }
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const newMatch: Match = {
       id: `m-${Date.now()}`,
       round: addForm.round || 1,
@@ -124,14 +124,14 @@ export default function AdminSchedulePage() {
       scheduledAt: addForm.scheduledAt ? new Date(addForm.scheduledAt).toISOString() : undefined,
       status: addForm.status || "scheduled",
     };
-    setMatches([...data.matches, newMatch]);
+    await setMatches([...data.matches, newMatch]);
     setShowAdd(false);
     setAddForm({ round: 1, matchNumber: 1, status: "scheduled" });
   };
 
-  const resetSchedule = () => {
+  const resetSchedule = async () => {
     if (confirm("Обнулить расписание? Все матчи будут удалены.")) {
-      setMatches([]);
+      await setMatches([]);
     }
   };
 

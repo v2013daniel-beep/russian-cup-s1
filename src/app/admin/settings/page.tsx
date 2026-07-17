@@ -63,7 +63,7 @@ export default function AdminSettingsPage() {
     e.preventDefault();
     if (!settings) return;
 
-    updateTournament({
+    await updateTournament({
       name: settings.name,
       date: new Date(settings.date).toISOString(),
       prizePool: settings.prizePool,
@@ -73,14 +73,14 @@ export default function AdminSettingsPage() {
       registrationOpen: settings.registrationOpen,
     });
 
-    updateContacts({
+    await updateContacts({
       discord: settings.discord,
       telegram: settings.telegram,
       email: settings.email,
       responseTime: settings.responseTime,
     });
 
-    updateLiveStream({
+    await updateLiveStream({
       url: settings.streamUrl,
       title: settings.streamTitle,
       isActive: settings.streamActive,

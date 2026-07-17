@@ -89,8 +89,8 @@ export async function getDashboardStats() {
     return mockStats;
   }
 
-  const tournament = await prisma.tournament.findUnique({
-    where: { id: "default" },
+  const tournament = await prisma.tournament.findFirst({
+    orderBy: { createdAt: "desc" },
   });
 
   const today = new Date();
@@ -183,11 +183,14 @@ export async function getAdminSettings() {
       telegram: mockTournament.contacts.telegram,
       email: mockTournament.contacts.email,
       responseTime: mockTournament.contacts.responseTime,
+      streamUrl: "",
+      streamTitle: "Трансляция скоро начнётся",
+      streamActive: false,
     };
   }
 
-  const tournament = await prisma.tournament.findUnique({
-    where: { id: "default" },
+  const tournament = await prisma.tournament.findFirst({
+    orderBy: { createdAt: "desc" },
     include: { contacts: true },
   });
 
@@ -207,6 +210,9 @@ export async function getAdminSettings() {
     telegram: tournament.contacts?.telegram || "",
     email: tournament.contacts?.email || "",
     responseTime: tournament.contacts?.responseTime || "",
+    streamUrl: tournament.streamUrl || "",
+    streamTitle: tournament.streamTitle,
+    streamActive: tournament.streamActive,
   };
 }
 
@@ -222,6 +228,9 @@ export async function updateSettings(data: {
   telegram: string;
   email: string;
   responseTime: string;
+  streamUrl?: string;
+  streamTitle?: string;
+  streamActive?: boolean;
 }) {
   return updateTournament({
     name: data.name,
@@ -237,6 +246,9 @@ export async function updateSettings(data: {
       email: data.email,
       responseTime: data.responseTime,
     },
+    streamUrl: data.streamUrl || "",
+    streamTitle: data.streamTitle || "Трансляция скоро начнётся",
+    streamActive: data.streamActive ?? false,
   });
 }
 
@@ -247,8 +259,8 @@ export async function toggleRegistration() {
     return { success: true, registrationOpen: !mockTournament.registrationOpen };
   }
 
-  const tournament = await prisma.tournament.findUnique({
-    where: { id: "default" },
+  const tournament = await prisma.tournament.findFirst({
+    orderBy: { createdAt: "desc" },
   });
 
   if (!tournament) {
@@ -256,7 +268,7 @@ export async function toggleRegistration() {
   }
 
   await prisma.tournament.update({
-    where: { id: "default" },
+    where: { id: tournament.id },
     data: { registrationOpen: !tournament.registrationOpen },
   });
 
@@ -322,6 +334,9 @@ export async function updateTournament(data: {
     email: string;
     responseTime: string;
   };
+  streamUrl?: string;
+  streamTitle?: string;
+  streamActive?: boolean;
 }) {
   if (isMockMode()) {
     revalidatePath("/");
@@ -329,8 +344,16 @@ export async function updateTournament(data: {
     return { success: true };
   }
 
+  const tournament = await prisma.tournament.findFirst({
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!tournament) {
+    throw new Error("Tournament not found");
+  }
+
   await prisma.tournament.update({
-    where: { id: "default" },
+    where: { id: tournament.id },
     data: {
       name: data.name,
       date: new Date(data.date),
@@ -339,6 +362,9 @@ export async function updateTournament(data: {
       format: data.format,
       server: data.server,
       registrationOpen: data.registrationOpen,
+      streamUrl: data.streamUrl,
+      streamTitle: data.streamTitle,
+      streamActive: data.streamActive,
       contacts: {
         upsert: {
           create: data.contacts,

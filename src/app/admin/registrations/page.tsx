@@ -95,9 +95,7 @@ export default function AdminRegistrationsPage() {
           <Button variant="outline" onClick={exportRegistrations}>
             <Download className="w-4 h-4 mr-2" /> Экспорт CSV
           </Button>
-          <Button variant="secondary" onClick={() => { if (confirm("Сбросить все данные в демо-режиме?")) reset(); }}>
-            Сбросить данные
-          </Button>
+
         </div>
       </div>
 
@@ -175,7 +173,7 @@ export default function AdminRegistrationsPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => { if (confirm("Удалить заявку?")) deleteRegistration(reg.id); }}
+                onClick={async () => { if (confirm("Удалить заявку?")) await deleteRegistration(reg.id); }}
               >
                 <Trash2 className="w-4 h-4 text-dota-red" />
               </Button>

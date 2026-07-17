@@ -3,7 +3,6 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useState,
   ReactNode,
   useCallback,
@@ -16,198 +15,239 @@ import {
   type TournamentSettings,
   type Contacts,
   type LiveStream,
-  getDefaultData,
 } from "@/lib/data";
-import { loadSiteData, saveSiteData, resetSiteData } from "@/lib/mock";
+import { getSiteData } from "@/server/actions/site";
+import {
+  updateTournament as updateTournamentAction,
+  toggleRegistration as toggleRegistrationAction,
+} from "@/server/actions/admin";
+import {
+  createTeam as createTeamAction,
+  addTeam as addTeamAction,
+  updateTeam as updateTeamAction,
+  deleteTeam as deleteTeamAction,
+} from "@/server/actions/team";
+import {
+  setMatches as setMatchesAction,
+  updateMatch as updateMatchAction,
+  deleteMatch as deleteMatchAction,
+  createMatch as createMatchAction,
+} from "@/server/actions/match";
+import { trackVisit as trackVisitAction } from "@/server/actions/visit";
 
 interface SiteDataContextValue {
   data: SiteData;
   isLoaded: boolean;
-  setData: (data: SiteData) => void;
-  updateTournament: (tournament: Partial<TournamentSettings>) => void;
-  updateContacts: (contacts: Partial<Contacts>) => void;
-  updateLiveStream: (liveStream: Partial<LiveStream>) => void;
+  refresh: () => Promise<void>;
+  updateTournament: (tournament: Partial<TournamentSettings> & Partial<LiveStream>) => Promise<void>;
+  updateContacts: (contacts: Partial<Contacts>) => Promise<void>;
+  updateLiveStream: (liveStream: Partial<LiveStream>) => Promise<void>;
   setTeams: (teams: Team[]) => void;
-  addTeam: (team: Omit<Team, "id" | "createdAt">) => void;
-  updateTeam: (id: string, team: Partial<Team>) => void;
-  deleteTeam: (id: string) => void;
-  addRegistration: (registration: Omit<Registration, "id" | "createdAt">) => Registration;
-  deleteRegistration: (id: string) => void;
-  setMatches: (matches: Match[]) => void;
-  updateMatch: (id: string, match: Partial<Match>) => void;
-  trackVisit: (ip?: string, userAgent?: string) => void;
+  addTeam: (team: Omit<Team, "id" | "createdAt">) => Promise<void>;
+  updateTeam: (id: string, team: Partial<Team>) => Promise<void>;
+  deleteTeam: (id: string) => Promise<void>;
+  addRegistration: (registration: Omit<Registration, "id" | "createdAt">) => Promise<Registration>;
+  deleteRegistration: (id: string) => Promise<void>;
+  setMatches: (matches: Match[]) => Promise<void>;
+  updateMatch: (id: string, match: Partial<Match>) => Promise<void>;
+  trackVisit: () => Promise<void>;
   reset: () => void;
 }
 
 const SiteDataContext = createContext<SiteDataContextValue | null>(null);
 
-export function SiteDataProvider({ children }: { children: ReactNode }) {
-  const [data, setDataState] = useState<SiteData>(() => getDefaultData());
-  const [isLoaded, setIsLoaded] = useState(false);
+export function SiteDataProvider({
+  children,
+  initialData,
+}: {
+  children: ReactNode;
+  initialData: SiteData;
+}) {
+  const [data, setDataState] = useState<SiteData>(initialData);
+  const [isLoaded, setIsLoaded] = useState(true);
 
-  useEffect(() => {
-    setDataState(loadSiteData());
-    setIsLoaded(true);
+  const refresh = useCallback(async () => {
+    try {
+      const fresh = await getSiteData();
+      setDataState(fresh);
+    } catch (error) {
+      console.error("Failed to refresh site data:", error);
+    }
   }, []);
 
-  const setData = useCallback((newData: SiteData) => {
-    setDataState(newData);
-    saveSiteData(newData);
-  }, []);
+  const updateTournament = useCallback(
+    async (tournament: Partial<TournamentSettings> & Partial<LiveStream>) => {
+      await updateTournamentAction({
+        name: tournament.name ?? data.tournament.name,
+        date: tournament.date ?? data.tournament.date,
+        prizePool: tournament.prizePool ?? data.tournament.prizePool,
+        entryFee: tournament.entryFee ?? data.tournament.entryFee,
+        format: tournament.format ?? data.tournament.format,
+        server: tournament.server ?? data.tournament.server,
+        registrationOpen: tournament.registrationOpen ?? data.tournament.registrationOpen,
+        contacts: data.contacts,
+        streamUrl: tournament.url ?? data.liveStream.url,
+        streamTitle: tournament.title ?? data.liveStream.title,
+        streamActive: tournament.isActive ?? data.liveStream.isActive,
+      });
+      await refresh();
+    },
+    [data, refresh]
+  );
 
-  const updateTournament = useCallback((tournament: Partial<TournamentSettings>) => {
-    setDataState((prev) => {
-      const next = { ...prev, tournament: { ...prev.tournament, ...tournament } };
-      saveSiteData(next);
-      return next;
-    });
-  }, []);
+  const updateContacts = useCallback(
+    async (contacts: Partial<Contacts>) => {
+      await updateTournamentAction({
+        name: data.tournament.name,
+        date: data.tournament.date,
+        prizePool: data.tournament.prizePool,
+        entryFee: data.tournament.entryFee,
+        format: data.tournament.format,
+        server: data.tournament.server,
+        registrationOpen: data.tournament.registrationOpen,
+        contacts: {
+          discord: contacts.discord ?? data.contacts.discord,
+          telegram: contacts.telegram ?? data.contacts.telegram,
+          email: contacts.email ?? data.contacts.email,
+          responseTime: contacts.responseTime ?? data.contacts.responseTime,
+        },
+        streamUrl: data.liveStream.url,
+        streamTitle: data.liveStream.title,
+        streamActive: data.liveStream.isActive,
+      });
+      await refresh();
+    },
+    [data, refresh]
+  );
 
-  const updateContacts = useCallback((contacts: Partial<Contacts>) => {
-    setDataState((prev) => {
-      const next = { ...prev, contacts: { ...prev.contacts, ...contacts } };
-      saveSiteData(next);
-      return next;
-    });
-  }, []);
-
-  const updateLiveStream = useCallback((liveStream: Partial<LiveStream>) => {
-    setDataState((prev) => {
-      const next = { ...prev, liveStream: { ...prev.liveStream, ...liveStream } };
-      saveSiteData(next);
-      return next;
-    });
-  }, []);
+  const updateLiveStream = useCallback(
+    async (liveStream: Partial<LiveStream>) => {
+      await updateTournamentAction({
+        name: data.tournament.name,
+        date: data.tournament.date,
+        prizePool: data.tournament.prizePool,
+        entryFee: data.tournament.entryFee,
+        format: data.tournament.format,
+        server: data.tournament.server,
+        registrationOpen: data.tournament.registrationOpen,
+        contacts: data.contacts,
+        streamUrl: liveStream.url ?? data.liveStream.url,
+        streamTitle: liveStream.title ?? data.liveStream.title,
+        streamActive: liveStream.isActive ?? data.liveStream.isActive,
+      });
+      await refresh();
+    },
+    [data, refresh]
+  );
 
   const setTeams = useCallback((teams: Team[]) => {
-    setDataState((prev) => {
-      const next = { ...prev, teams };
-      saveSiteData(next);
-      return next;
-    });
+    setDataState((prev) => ({ ...prev, teams, registrations: teams.map(mapTeamToRegistration) }));
   }, []);
 
-  const addTeam = useCallback((team: Omit<Team, "id" | "createdAt">) => {
-    setDataState((prev) => {
-      const newTeam: Team = {
-        ...team,
-        id: `team-${Date.now()}`,
+  const addTeam = useCallback(
+    async (team: Omit<Team, "id" | "createdAt">) => {
+      await addTeamAction({
+        teamName: team.teamName,
+        teamTag: team.teamTag,
+        playerCount: team.playerCount,
+        substitute: team.substitute,
+        captainName: team.captainName,
+        captainNickname: team.captainNickname,
+        captainTelegram: team.captainTelegram,
+        captainDiscord: team.captainDiscord,
+        captainEmail: team.captainEmail,
+        players: team.players as { nickname: string; mmr: string; dotabuff: string; steam: string }[],
+        status: team.status,
+      });
+      await refresh();
+    },
+    [refresh]
+  );
+
+  const updateTeam = useCallback(
+    async (id: string, team: Partial<Team>) => {
+      await updateTeamAction(id, {
+        teamName: team.teamName,
+        teamTag: team.teamTag,
+        playerCount: team.playerCount,
+        substitute: team.substitute,
+        captainName: team.captainName,
+        captainNickname: team.captainNickname,
+        captainTelegram: team.captainTelegram,
+        captainDiscord: team.captainDiscord,
+        captainEmail: team.captainEmail,
+        players: team.players as { nickname: string; mmr: string; dotabuff: string; steam: string }[],
+        status: team.status,
+      });
+      await refresh();
+    },
+    [refresh]
+  );
+
+  const deleteTeam = useCallback(
+    async (id: string) => {
+      await deleteTeamAction(id);
+      await refresh();
+    },
+    [refresh]
+  );
+
+  const addRegistration = useCallback(
+    async (registration: Omit<Registration, "id" | "createdAt">): Promise<Registration> => {
+      const result = await createTeamAction({
+        teamName: registration.teamName,
+        teamTag: registration.teamTag,
+        playerCount: registration.playerCount,
+        substitute: registration.substitute,
+        captainName: registration.captainName,
+        captainNickname: registration.captainNickname,
+        captainTelegram: registration.captainTelegram,
+        captainDiscord: registration.captainDiscord,
+        captainEmail: registration.captainEmail,
+        players: registration.players as { nickname: string; mmr: string; dotabuff: string; steam: string }[],
+      });
+
+      await refresh();
+
+      return {
+        ...registration,
+        id: result.teamId,
         createdAt: new Date().toISOString(),
       };
-      const next = { ...prev, teams: [newTeam, ...prev.teams] };
-      saveSiteData(next);
-      return next;
-    });
-  }, []);
+    },
+    [refresh]
+  );
 
-  const updateTeam = useCallback((id: string, team: Partial<Team>) => {
-    setDataState((prev) => {
-      const next = {
-        ...prev,
-        teams: prev.teams.map((t) => (t.id === id ? { ...t, ...team } : t)),
-      };
-      saveSiteData(next);
-      return next;
-    });
-  }, []);
+  const deleteRegistration = useCallback(
+    async (id: string) => {
+      await deleteTeamAction(id);
+      await refresh();
+    },
+    [refresh]
+  );
 
-  const deleteTeam = useCallback((id: string) => {
-    setDataState((prev) => {
-      const next = { ...prev, teams: prev.teams.filter((t) => t.id !== id) };
-      saveSiteData(next);
-      return next;
-    });
-  }, []);
+  const setMatches = useCallback(
+    async (matches: Match[]) => {
+      await setMatchesAction(matches);
+      await refresh();
+    },
+    [refresh]
+  );
 
-  const addRegistration = useCallback((registration: Omit<Registration, "id" | "createdAt">): Registration => {
-    let created: Registration | null = null;
-    setDataState((prev) => {
-      const newRegistration: Registration = {
-        ...registration,
-        id: `reg-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-      };
+  const updateMatch = useCallback(
+    async (id: string, match: Partial<Match>) => {
+      await updateMatchAction(id, match);
+      await refresh();
+    },
+    [refresh]
+  );
 
-      // Sync team
-      const existingIndex = prev.teams.findIndex(
-        (t) => t.teamName.toLowerCase() === registration.teamName.toLowerCase()
-      );
-      const team: Team = {
-        id: existingIndex >= 0 ? prev.teams[existingIndex].id : `team-${Date.now()}`,
-        ...registration,
-        status: existingIndex >= 0 ? prev.teams[existingIndex].status : "pending",
-        createdAt: existingIndex >= 0 ? prev.teams[existingIndex].createdAt : new Date().toISOString(),
-      };
-
-      const teams = [...prev.teams];
-      if (existingIndex >= 0) {
-        teams[existingIndex] = team;
-      } else {
-        teams.unshift(team);
-      }
-
-      created = newRegistration;
-
-      const next = {
-        ...prev,
-        registrations: [newRegistration, ...prev.registrations],
-        teams,
-      };
-      saveSiteData(next);
-      return next;
-    });
-    return created!;
-  }, []);
-
-  const deleteRegistration = useCallback((id: string) => {
-    setDataState((prev) => {
-      const next = { ...prev, registrations: prev.registrations.filter((r) => r.id !== id) };
-      saveSiteData(next);
-      return next;
-    });
-  }, []);
-
-  const setMatches = useCallback((matches: Match[]) => {
-    setDataState((prev) => {
-      const next = { ...prev, matches };
-      saveSiteData(next);
-      return next;
-    });
-  }, []);
-
-  const updateMatch = useCallback((id: string, match: Partial<Match>) => {
-    setDataState((prev) => {
-      const next = {
-        ...prev,
-        matches: prev.matches.map((m) => (m.id === id ? { ...m, ...match } : m)),
-      };
-      saveSiteData(next);
-      return next;
-    });
-  }, []);
-
-  const trackVisit = useCallback((ip?: string, userAgent?: string) => {
-    setDataState((prev) => {
-      const next = {
-        ...prev,
-        visits: [
-          ...prev.visits,
-          {
-            id: `visit-${Date.now()}`,
-            date: new Date().toISOString(),
-            ip,
-            userAgent,
-          },
-        ],
-      };
-      saveSiteData(next);
-      return next;
-    });
+  const trackVisit = useCallback(async () => {
+    await trackVisitAction();
   }, []);
 
   const reset = useCallback(() => {
-    resetSiteData();
-    setDataState(getDefaultData());
+    // No-op in production; kept for API compatibility
   }, []);
 
   return (
@@ -215,7 +255,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
       value={{
         data,
         isLoaded,
-        setData,
+        refresh,
         updateTournament,
         updateContacts,
         updateLiveStream,
@@ -242,4 +282,21 @@ export function useSiteData() {
     throw new Error("useSiteData must be used within SiteDataProvider");
   }
   return ctx;
+}
+
+function mapTeamToRegistration(team: Team): Registration {
+  return {
+    id: team.id,
+    teamName: team.teamName,
+    teamTag: team.teamTag,
+    playerCount: team.playerCount,
+    substitute: team.substitute,
+    captainName: team.captainName,
+    captainNickname: team.captainNickname,
+    captainTelegram: team.captainTelegram,
+    captainDiscord: team.captainDiscord,
+    captainEmail: team.captainEmail,
+    players: team.players,
+    createdAt: team.createdAt,
+  };
 }

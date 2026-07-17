@@ -22,8 +22,8 @@ export async function createPaymentUrl(teamId: string) {
     throw new Error("Команда не найдена");
   }
 
-  const tournament = await prisma.tournament.findUnique({
-    where: { id: "default" },
+  const tournament = await prisma.tournament.findFirst({
+    orderBy: { createdAt: "desc" },
   });
 
   if (!tournament) {
@@ -39,17 +39,24 @@ export async function createPaymentUrl(teamId: string) {
     },
   }));
 
+  const merchantLogin = process.env.ROBOKASSA_MERCHANT_LOGIN;
+  const password1 = process.env.ROBOKASSA_PASSWORD_1;
+
+  if (!merchantLogin || !password1) {
+    throw new Error("Robokassa не настроена");
+  }
+
   const outSum = tournament.entryFee.toString();
   const invId = payment.id;
   const description = encodeURIComponent(`Регистрация ${team.teamName}`);
   const signatureValue = crypto
     .createHash("md5")
-    .update(`${process.env.ROBOKASSA_MERCHANT_LOGIN}:${outSum}:${invId}:${process.env.ROBOKASSA_PASSWORD_1}`)
+    .update(`${merchantLogin}:${outSum}:${invId}:${password1}`)
     .digest("hex");
 
   const url =
     `https://auth.robokassa.ru/Merchant/Index.aspx?` +
-    `MerchantLogin=${process.env.ROBOKASSA_MERCHANT_LOGIN}&` +
+    `MerchantLogin=${merchantLogin}&` +
     `OutSum=${outSum}&` +
     `InvId=${invId}&` +
     `Description=${description}&` +

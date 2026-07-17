@@ -37,13 +37,13 @@ export default function AdminTeamsPage() {
         team.captainNickname.toLowerCase().includes(search.toLowerCase())
     );
 
-  const handleStatusChange = (team: Team, status: "pending" | "paid") => {
-    updateTeam(team.id, { status });
+  const handleStatusChange = async (team: Team, status: "pending" | "paid") => {
+    await updateTeam(team.id, { status });
   };
 
-  const handleDelete = (teamId: string) => {
+  const handleDelete = async (teamId: string) => {
     if (confirm("Удалить команду?")) {
-      deleteTeam(teamId);
+      await deleteTeam(teamId);
     }
   };
 
@@ -52,9 +52,9 @@ export default function AdminTeamsPage() {
     setEditForm({ ...team });
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (editingId && editForm) {
-      updateTeam(editingId, editForm);
+      await updateTeam(editingId, editForm);
       setEditingId(null);
       setEditForm({});
     }
@@ -65,9 +65,9 @@ export default function AdminTeamsPage() {
     setEditForm({});
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!addForm.teamName || !addForm.teamTag) return;
-    addTeam({
+    await addTeam({
       teamName: addForm.teamName,
       teamTag: addForm.teamTag,
       playerCount: addForm.playerCount || 5,

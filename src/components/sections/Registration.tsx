@@ -41,7 +41,7 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
     const formData = new FormData(e.currentTarget);
 
     try {
-      const result = addRegistration({
+      const result = await addRegistration({
         teamName: formData.get("teamName") as string,
         teamTag: formData.get("teamTag") as string,
         playerCount: parseInt(formData.get("playerCount") as string) || 5,
@@ -69,11 +69,14 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
     setPaymentMethod(method);
 
     if (method === "robokassa") {
-      // Demo mode: no real payment
-      setTimeout(() => {
-        setError("В демо-режиме оплата недоступна. Свяжитесь с администрацией.");
+      try {
+        const { createRobokassaPayment } = await import("@/server/actions/payment");
+        const { url } = await createRobokassaPayment(registrationId);
+        window.location.href = url;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Ошибка создания платежа");
         setPaymentMethod(null);
-      }, 500);
+      }
     }
   };
 

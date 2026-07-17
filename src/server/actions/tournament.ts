@@ -13,9 +13,9 @@ export async function getTournament() {
     };
   }
 
-  const tournament = await prisma.tournament.findUnique({
-    where: { id: "default" },
+  const tournament = await prisma.tournament.findFirst({
     include: { contacts: true },
+    orderBy: { createdAt: "desc" },
   });
 
   if (!tournament) {

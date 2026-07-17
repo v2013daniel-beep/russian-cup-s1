@@ -1,4 +1,4 @@
 {
-  "buildCommand": "if [ \"$MOCK_MODE\" = \"true\" ]; then prisma generate && next build; else prisma migrate deploy && prisma generate && next build; fi",
+  "buildCommand": "prisma migrate deploy && prisma db seed && prisma generate && next build",
   "framework": "nextjs"
 }
