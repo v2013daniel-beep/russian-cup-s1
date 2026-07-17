@@ -77,67 +77,70 @@ export function SiteDataProvider({
 
   const updateTournament = useCallback(
     async (tournament: Partial<TournamentSettings> & Partial<LiveStream>) => {
+      const fresh = await getSiteData();
       await updateTournamentAction({
-        name: tournament.name ?? data.tournament.name,
-        date: tournament.date ?? data.tournament.date,
-        prizePool: tournament.prizePool ?? data.tournament.prizePool,
-        entryFee: tournament.entryFee ?? data.tournament.entryFee,
-        format: tournament.format ?? data.tournament.format,
-        server: tournament.server ?? data.tournament.server,
-        registrationOpen: tournament.registrationOpen ?? data.tournament.registrationOpen,
-        contacts: data.contacts,
-        streamUrl: tournament.url ?? data.liveStream.url,
-        streamTitle: tournament.title ?? data.liveStream.title,
-        streamActive: tournament.isActive ?? data.liveStream.isActive,
+        name: tournament.name ?? fresh.tournament.name,
+        date: tournament.date ?? fresh.tournament.date,
+        prizePool: tournament.prizePool ?? fresh.tournament.prizePool,
+        entryFee: tournament.entryFee ?? fresh.tournament.entryFee,
+        format: tournament.format ?? fresh.tournament.format,
+        server: tournament.server ?? fresh.tournament.server,
+        registrationOpen: tournament.registrationOpen ?? fresh.tournament.registrationOpen,
+        contacts: fresh.contacts,
+        streamUrl: tournament.url ?? fresh.liveStream.url,
+        streamTitle: tournament.title ?? fresh.liveStream.title,
+        streamActive: tournament.isActive ?? fresh.liveStream.isActive,
       });
       await refresh();
     },
-    [data, refresh]
+    [refresh]
   );
 
   const updateContacts = useCallback(
     async (contacts: Partial<Contacts>) => {
+      const fresh = await getSiteData();
       await updateTournamentAction({
-        name: data.tournament.name,
-        date: data.tournament.date,
-        prizePool: data.tournament.prizePool,
-        entryFee: data.tournament.entryFee,
-        format: data.tournament.format,
-        server: data.tournament.server,
-        registrationOpen: data.tournament.registrationOpen,
+        name: fresh.tournament.name,
+        date: fresh.tournament.date,
+        prizePool: fresh.tournament.prizePool,
+        entryFee: fresh.tournament.entryFee,
+        format: fresh.tournament.format,
+        server: fresh.tournament.server,
+        registrationOpen: fresh.tournament.registrationOpen,
         contacts: {
-          discord: contacts.discord ?? data.contacts.discord,
-          telegram: contacts.telegram ?? data.contacts.telegram,
-          email: contacts.email ?? data.contacts.email,
-          responseTime: contacts.responseTime ?? data.contacts.responseTime,
+          discord: contacts.discord ?? fresh.contacts.discord,
+          telegram: contacts.telegram ?? fresh.contacts.telegram,
+          email: contacts.email ?? fresh.contacts.email,
+          responseTime: contacts.responseTime ?? fresh.contacts.responseTime,
         },
-        streamUrl: data.liveStream.url,
-        streamTitle: data.liveStream.title,
-        streamActive: data.liveStream.isActive,
+        streamUrl: fresh.liveStream.url,
+        streamTitle: fresh.liveStream.title,
+        streamActive: fresh.liveStream.isActive,
       });
       await refresh();
     },
-    [data, refresh]
+    [refresh]
   );
 
   const updateLiveStream = useCallback(
     async (liveStream: Partial<LiveStream>) => {
+      const fresh = await getSiteData();
       await updateTournamentAction({
-        name: data.tournament.name,
-        date: data.tournament.date,
-        prizePool: data.tournament.prizePool,
-        entryFee: data.tournament.entryFee,
-        format: data.tournament.format,
-        server: data.tournament.server,
-        registrationOpen: data.tournament.registrationOpen,
-        contacts: data.contacts,
-        streamUrl: liveStream.url ?? data.liveStream.url,
-        streamTitle: liveStream.title ?? data.liveStream.title,
-        streamActive: liveStream.isActive ?? data.liveStream.isActive,
+        name: fresh.tournament.name,
+        date: fresh.tournament.date,
+        prizePool: fresh.tournament.prizePool,
+        entryFee: fresh.tournament.entryFee,
+        format: fresh.tournament.format,
+        server: fresh.tournament.server,
+        registrationOpen: fresh.tournament.registrationOpen,
+        contacts: fresh.contacts,
+        streamUrl: liveStream.url ?? fresh.liveStream.url,
+        streamTitle: liveStream.title ?? fresh.liveStream.title,
+        streamActive: liveStream.isActive ?? fresh.liveStream.isActive,
       });
       await refresh();
     },
-    [data, refresh]
+    [refresh]
   );
 
   const setTeams = useCallback((teams: Team[]) => {

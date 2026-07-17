@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { checkAdminAuth } from "@/server/actions/admin";
+import { checkAdminAuth, updateSettings } from "@/server/actions/admin";
 import { useSiteData } from "@/hooks/useSiteData";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +28,7 @@ interface SettingsForm {
 export default function AdminSettingsPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
-  const { data, updateTournament, updateContacts, updateLiveStream } = useSiteData();
+  const { data, refresh } = useSiteData();
   const [settings, setSettings] = useState<SettingsForm | null>(null);
   const [message, setMessage] = useState("");
 
@@ -63,7 +63,7 @@ export default function AdminSettingsPage() {
     e.preventDefault();
     if (!settings) return;
 
-    await updateTournament({
+    await updateSettings({
       name: settings.name,
       date: new Date(settings.date).toISOString(),
       prizePool: settings.prizePool,
@@ -71,20 +71,16 @@ export default function AdminSettingsPage() {
       format: settings.format,
       server: settings.server,
       registrationOpen: settings.registrationOpen,
-    });
-
-    await updateContacts({
       discord: settings.discord,
       telegram: settings.telegram,
       email: settings.email,
       responseTime: settings.responseTime,
+      streamUrl: settings.streamUrl,
+      streamTitle: settings.streamTitle,
+      streamActive: settings.streamActive,
     });
 
-    await updateLiveStream({
-      url: settings.streamUrl,
-      title: settings.streamTitle,
-      isActive: settings.streamActive,
-    });
+    await refresh();
 
     setMessage("Настройки сохранены");
     setTimeout(() => setMessage(""), 3000);
