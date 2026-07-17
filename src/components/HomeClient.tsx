@@ -43,17 +43,17 @@ export function HomeClient({
           format={data.tournament.format}
           server={data.tournament.server}
         />
+        <LiveStream
+          url={data.liveStream.url}
+          title={data.liveStream.title}
+          isActive={data.liveStream.isActive}
+        />
         <Registration
           entryFee={data.tournament.entryFee}
           registrationOpen={data.tournament.registrationOpen}
         />
         <Teams teams={data.teams} />
         <Bracket matches={data.matches} />
-        <LiveStream
-          url={data.liveStream.url}
-          title={data.liveStream.title}
-          isActive={data.liveStream.isActive}
-        />
         <FAQ />
         <Sponsors />
         <HallOfFame />

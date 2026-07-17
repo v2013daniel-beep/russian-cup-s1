@@ -7,8 +7,21 @@ import { useSiteData } from "@/hooks/useSiteData";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Plus, Trash2, Save, X } from "lucide-react";
+import { Plus, Trash2, Save, X, Shuffle } from "lucide-react";
 import { type Match } from "@/lib/data";
+
+const roundNames: Record<number, string> = {
+  1: "Раунд 1",
+  2: "Полуфинал",
+  3: "Финал",
+  4: "Гранд-финал",
+};
+
+const emptyBracketRounds = [
+  { round: 1, matches: 2 },
+  { round: 2, matches: 1 },
+  { round: 3, matches: 1 },
+];
 
 export default function AdminSchedulePage() {
   const router = useRouter();
@@ -31,6 +44,48 @@ export default function AdminSchedulePage() {
   }, [router]);
 
   const teamOptions = ["", ...data.teams.map((t) => t.teamName)];
+
+  const generateEmptyBracket = () => {
+    const newMatches: Match[] = [];
+    emptyBracketRounds.forEach(({ round, matches }) => {
+      for (let i = 1; i <= matches; i++) {
+        newMatches.push({
+          id: `m-${round}-${i}-${Date.now()}`,
+          round,
+          matchNumber: i,
+          status: "scheduled",
+        });
+      }
+    });
+    setMatches(newMatches);
+  };
+
+  const autoFillTeams = () => {
+    const teams = data.teams.filter((t) => t.status === "paid").map((t) => t.teamName);
+    if (teams.length < 4) {
+      alert("Для автозаполнения нужно минимум 4 команды со статусом 'Оплачено'");
+      return;
+    }
+    const shuffled = [...teams].sort(() => Math.random() - 0.5);
+    const newMatches: Match[] = [];
+    emptyBracketRounds.forEach(({ round, matches }) => {
+      for (let i = 1; i <= matches; i++) {
+        const match: Match = {
+          id: `m-${round}-${i}-${Date.now()}-${i}`,
+          round,
+          matchNumber: i,
+          status: "scheduled",
+        };
+        if (round === 1) {
+          const idx = (i - 1) * 2;
+          match.teamA = shuffled[idx];
+          match.teamB = shuffled[idx + 1];
+        }
+        newMatches.push(match);
+      }
+    });
+    setMatches(newMatches);
+  };
 
   const handleDelete = (id: string) => {
     if (confirm("Удалить матч?")) {
@@ -80,6 +135,10 @@ export default function AdminSchedulePage() {
     }
   };
 
+  const rounds = Array.from(new Set(data.matches.map((m) => m.round))).sort((a, b) => a - b);
+  const maxRound = rounds.length > 0 ? Math.max(...rounds) : 3;
+  const displayRounds = Array.from({ length: maxRound }, (_, i) => i + 1);
+
   if (!authChecked) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -91,13 +150,19 @@ export default function AdminSchedulePage() {
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <h1 className="text-3xl font-display font-bold text-white">Расписание матчей</h1>
-        <div className="flex gap-2">
+        <h1 className="text-3xl font-display font-bold text-white">Конструктор сетки</h1>
+        <div className="flex flex-wrap gap-2">
           <Button variant="gold" onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> Добавить матч
           </Button>
+          <Button variant="outline" onClick={generateEmptyBracket}>
+            Создать пустую сетку
+          </Button>
+          <Button variant="outline" onClick={autoFillTeams}>
+            <Shuffle className="w-4 h-4 mr-2" /> Автозаполнение
+          </Button>
           <Button variant="secondary" onClick={resetSchedule}>
-            Обнулить сетку
+            Обнулить
           </Button>
         </div>
       </div>
@@ -128,67 +193,85 @@ export default function AdminSchedulePage() {
         </Card>
       )}
 
-      <div className="space-y-4">
-        {data.matches.length === 0 && (
-          <Card className="p-8 text-center text-dota-muted">
-            Сетка пуста. Добавьте матчи или обнулите счётчик.
-          </Card>
-        )}
-        {data.matches
-          .sort((a, b) => a.round - b.round || a.matchNumber - b.matchNumber)
-          .map((match) => (
-            <Card key={match.id} className="p-4">
-              {editingId === match.id ? (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Input type="number" value={editForm.round} onChange={(e) => setEditForm({ ...editForm, round: parseInt(e.target.value) || 1 })} />
-                  <Input type="number" value={editForm.matchNumber} onChange={(e) => setEditForm({ ...editForm, matchNumber: parseInt(e.target.value) || 1 })} />
-                  <Input type="datetime-local" value={editForm.scheduledAt || ""} onChange={(e) => setEditForm({ ...editForm, scheduledAt: e.target.value })} />
-                  <select
-                    className="bg-dota-surface border border-dota-gold/20 rounded-lg px-4 py-2 text-white"
-                    value={editForm.status}
-                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value as Match["status"] })}
-                  >
-                    <option value="scheduled">Запланирован</option>
-                    <option value="live">Live</option>
-                    <option value="finished">Завершён</option>
-                  </select>
-                  <TeamSelect value={editForm.teamA || ""} options={teamOptions} onChange={(v) => setEditForm({ ...editForm, teamA: v || undefined })} />
-                  <TeamSelect value={editForm.teamB || ""} options={teamOptions} onChange={(v) => setEditForm({ ...editForm, teamB: v || undefined })} />
-                  <Input placeholder="Победитель" value={editForm.winner || ""} onChange={(e) => setEditForm({ ...editForm, winner: e.target.value || undefined })} />
-                  <div className="flex gap-2 items-center">
-                    <Button size="sm" onClick={saveEdit}><Save className="w-4 h-4 mr-1" /> Сохранить</Button>
-                    <Button variant="secondary" size="sm" onClick={() => setEditingId(null)}><X className="w-4 h-4 mr-1" /> Отмена</Button>
-                  </div>
+      {data.matches.length === 0 ? (
+        <Card className="p-12 text-center">
+          <p className="text-dota-muted text-lg mb-2">Сетка пуста</p>
+          <p className="text-dota-gold mb-6">Создайте пустую сетку, заполните команды вручную или используйте автозаполнение.</p>
+          <div className="flex justify-center gap-3">
+            <Button variant="outline" onClick={generateEmptyBracket}>Создать пустую сетку</Button>
+            <Button variant="gold" onClick={autoFillTeams}><Shuffle className="w-4 h-4 mr-2" /> Автозаполнение</Button>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {displayRounds.map((round) => {
+            const roundMatches = data.matches.filter((m) => m.round === round).sort((a, b) => a.matchNumber - b.matchNumber);
+            return (
+              <div key={round} className="space-y-4">
+                <h3 className="text-center font-display font-bold text-dota-gold text-lg">
+                  {roundNames[round] || `Раунд ${round}`}
+                </h3>
+                <div className="space-y-4">
+                  {roundMatches.map((match) => (
+                    <Card key={match.id} className="p-4">
+                      {editingId === match.id ? (
+                        <div className="space-y-3">
+                          <Input type="datetime-local" value={editForm.scheduledAt || ""} onChange={(e) => setEditForm({ ...editForm, scheduledAt: e.target.value })} />
+                          <TeamSelect value={editForm.teamA || ""} options={teamOptions} onChange={(v) => setEditForm({ ...editForm, teamA: v || undefined })} />
+                          <TeamSelect value={editForm.teamB || ""} options={teamOptions} onChange={(v) => setEditForm({ ...editForm, teamB: v || undefined })} />
+                          <Input placeholder="Победитель (если завершён)" value={editForm.winner || ""} onChange={(e) => setEditForm({ ...editForm, winner: e.target.value || undefined })} />
+                          <select
+                            className="w-full bg-dota-surface border border-dota-gold/20 rounded-lg px-4 py-2 text-white"
+                            value={editForm.status}
+                            onChange={(e) => setEditForm({ ...editForm, status: e.target.value as Match["status"] })}
+                          >
+                            <option value="scheduled">Запланирован</option>
+                            <option value="live">Live</option>
+                            <option value="finished">Завершён</option>
+                          </select>
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={saveEdit}><Save className="w-4 h-4 mr-1" /> Сохранить</Button>
+                            <Button variant="secondary" size="sm" onClick={() => setEditingId(null)}><X className="w-4 h-4 mr-1" /> Отмена</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-dota-muted">Матч {match.matchNumber}</span>
+                            <StatusBadge status={match.status} />
+                          </div>
+                          <div className="space-y-2 mb-3">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-white font-medium truncate max-w-[100px]">{match.teamA || "TBD"}</span>
+                              <span className="text-dota-muted text-xs">{match.status === "finished" && match.winner === match.teamA ? "W" : ""}</span>
+                            </div>
+                            <div className="h-px bg-dota-gold/20" />
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-white font-medium truncate max-w-[100px]">{match.teamB || "TBD"}</span>
+                              <span className="text-dota-muted text-xs">{match.status === "finished" && match.winner === match.teamB ? "W" : ""}</span>
+                            </div>
+                          </div>
+                          {match.scheduledAt && (
+                            <p className="text-xs text-dota-muted mb-3">
+                              {new Date(match.scheduledAt).toLocaleString("ru-RU")}
+                            </p>
+                          )}
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" fullWidth onClick={() => startEdit(match)}>Изменить</Button>
+                            <Button variant="secondary" size="sm" onClick={() => handleDelete(match.id)}>
+                              <Trash2 className="w-4 h-4 text-dota-red" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </Card>
+                  ))}
                 </div>
-              ) : (
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="text-dota-gold font-bold">Раунд {match.round}</span>
-                      <span className="text-dota-muted">Матч {match.matchNumber}</span>
-                      <StatusBadge status={match.status} />
-                    </div>
-                    <p className="text-white font-display text-lg">
-                      {match.teamA || "TBD"} <span className="text-dota-gold">vs</span> {match.teamB || "TBD"}
-                    </p>
-                    {match.scheduledAt && (
-                      <p className="text-sm text-dota-muted">
-                        {new Date(match.scheduledAt).toLocaleString("ru-RU")}
-                      </p>
-                    )}
-                    {match.winner && <p className="text-sm text-green-400">Победитель: {match.winner}</p>}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => startEdit(match)}>Изменить</Button>
-                    <Button variant="secondary" size="sm" onClick={() => handleDelete(match.id)}>
-                      <Trash2 className="w-4 h-4 text-dota-red" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Card>
-          ))}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -196,7 +279,7 @@ export default function AdminSchedulePage() {
 function TeamSelect({ value, options, onChange }: { value: string; options: string[]; onChange: (value: string) => void }) {
   return (
     <select
-      className="bg-dota-surface border border-dota-gold/20 rounded-lg px-4 py-2 text-white"
+      className="w-full bg-dota-surface border border-dota-gold/20 rounded-lg px-4 py-2 text-white"
       value={value}
       onChange={(e) => onChange(e.target.value)}
     >

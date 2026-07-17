@@ -8,7 +8,7 @@ import { adminLogout } from "@/server/actions/admin";
 const navItems = [
   { href: "/admin", label: "Дашборд", icon: LayoutDashboard },
   { href: "/admin/teams", label: "Команды", icon: Users },
-  { href: "/admin/schedule", label: "Расписание", icon: Calendar },
+  { href: "/admin/schedule", label: "Сетка", icon: Calendar },
   { href: "/admin/registrations", label: "Заявки", icon: ClipboardList },
   { href: "/admin/settings", label: "Настройки", icon: Settings },
 ];
