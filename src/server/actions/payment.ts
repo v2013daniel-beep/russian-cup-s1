@@ -54,14 +54,17 @@ export async function createPaymentUrl(teamId: string) {
     .update(`${merchantLogin}:${outSum}:${invId}:${password1}`)
     .digest("hex");
 
+  const isTestMode = process.env.ROBOKASSA_TEST_MODE === "true";
+  const testParam = isTestMode ? "&IsTest=1" : "";
+
   const url =
     `https://auth.robokassa.ru/Merchant/Index.aspx?` +
     `MerchantLogin=${merchantLogin}&` +
     `OutSum=${outSum}&` +
     `InvId=${invId}&` +
     `Description=${description}&` +
-    `SignatureValue=${signatureValue}&` +
-    `IsTest=1`;
+    `SignatureValue=${signatureValue}` +
+    testParam;
 
   return { url, invoiceId: invId };
 }
