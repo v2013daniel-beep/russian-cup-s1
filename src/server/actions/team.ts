@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { notifyAdmin } from "@/lib/telegram";
 import { isMockMode, mockTeams } from "@/lib/mock";
+import { requireAdmin } from "@/lib/auth";
 
 export interface PlayerInput {
   nickname: string;
@@ -128,6 +129,8 @@ export async function getTeams() {
 }
 
 export async function addTeam(data: TeamInput & { status?: "pending" | "paid" }) {
+  await requireAdmin();
+
   if (isMockMode()) {
     revalidatePath("/admin/teams");
     return { success: true, teamId: "demo-team-id" };
@@ -180,6 +183,8 @@ export async function addTeam(data: TeamInput & { status?: "pending" | "paid" })
 }
 
 export async function updateTeam(teamId: string, data: Partial<TeamInput> & { status?: "pending" | "paid" }) {
+  await requireAdmin();
+
   if (isMockMode()) {
     revalidatePath("/admin/teams");
     return { success: true };
@@ -223,6 +228,8 @@ export async function updateTeam(teamId: string, data: Partial<TeamInput> & { st
 }
 
 export async function deleteTeam(teamId: string) {
+  await requireAdmin();
+
   if (isMockMode()) {
     revalidatePath("/admin/teams");
     return { success: true };

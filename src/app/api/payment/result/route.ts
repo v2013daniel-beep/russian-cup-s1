@@ -29,8 +29,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
+    const existingPayment = await prisma.payment.findFirst({
+      where: { externalId: invId },
+    });
+
+    if (!existingPayment) {
+      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+    }
+
     const payment = await prisma.payment.update({
-      where: { id: invId },
+      where: { id: existingPayment.id },
       data: {
         status: "success",
         paidAt: new Date(),

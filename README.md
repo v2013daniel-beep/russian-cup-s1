@@ -19,7 +19,7 @@
 - TypeScript
 - Tailwind CSS
 - Framer Motion
-- Prisma + SQLite
+- Prisma + PostgreSQL (по умолчанию) / SQLite (для Docker/VPS)
 - Robokassa API
 - Telegram Bot API
 
@@ -52,9 +52,20 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ### 2. Инициализация базы данных
 
+По умолчанию используется PostgreSQL (`prisma/schema.prisma`). Для Vercel / production:
+
 ```bash
 npx prisma generate
-npx prisma migrate dev
+npx prisma migrate deploy
+npx prisma db seed
+```
+
+Для локальной разработки с SQLite переключи схему:
+
+```bash
+node scripts/switch-db.js sqlite
+npx prisma generate
+npx prisma db push
 npx prisma db seed
 ```
 

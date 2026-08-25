@@ -2,8 +2,10 @@
 
 import { prisma } from "@/lib/db";
 import * as XLSX from "xlsx";
+import { requireAdmin } from "@/lib/auth";
 
 export async function exportTeamsToExcel() {
+  await requireAdmin();
   const teams = await prisma.team.findMany({
     include: { players: { orderBy: { order: "asc" } }, payment: true },
     orderBy: { createdAt: "desc" },

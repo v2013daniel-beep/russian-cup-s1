@@ -15,6 +15,8 @@ import {
   type TournamentSettings,
   type Contacts,
   type LiveStream,
+  type HallOfFameEntry,
+  type PastTournament,
 } from "@/lib/data";
 import { getSiteData } from "@/server/actions/site";
 import {
@@ -33,6 +35,8 @@ import {
   deleteMatch as deleteMatchAction,
   createMatch as createMatchAction,
 } from "@/server/actions/match";
+import { setHallOfFame as setHallOfFameAction } from "@/server/actions/halloffame";
+import { setPastTournaments as setPastTournamentsAction } from "@/server/actions/pastTournaments";
 import { trackVisit as trackVisitAction } from "@/server/actions/visit";
 
 interface SiteDataContextValue {
@@ -50,6 +54,8 @@ interface SiteDataContextValue {
   deleteRegistration: (id: string) => Promise<void>;
   setMatches: (matches: Match[]) => Promise<void>;
   updateMatch: (id: string, match: Partial<Match>) => Promise<void>;
+  setHallOfFame: (entries: Omit<HallOfFameEntry, "id">[]) => Promise<void>;
+  setPastTournaments: (tournaments: Omit<PastTournament, "id">[]) => Promise<void>;
   trackVisit: () => Promise<void>;
   reset: () => void;
 }
@@ -245,6 +251,22 @@ export function SiteDataProvider({
     [refresh]
   );
 
+  const setHallOfFame = useCallback(
+    async (entries: Omit<HallOfFameEntry, "id">[]) => {
+      await setHallOfFameAction(entries);
+      await refresh();
+    },
+    [refresh]
+  );
+
+  const setPastTournaments = useCallback(
+    async (tournaments: Omit<PastTournament, "id">[]) => {
+      await setPastTournamentsAction(tournaments);
+      await refresh();
+    },
+    [refresh]
+  );
+
   const trackVisit = useCallback(async () => {
     await trackVisitAction();
   }, []);
@@ -270,6 +292,8 @@ export function SiteDataProvider({
         deleteRegistration,
         setMatches,
         updateMatch,
+        setHallOfFame,
+        setPastTournaments,
         trackVisit,
         reset,
       }}

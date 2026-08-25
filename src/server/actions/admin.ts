@@ -1,31 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { isMockMode, mockStats, mockTeams, mockTournament } from "@/lib/mock";
-
-function getSecret() {
-  return new TextEncoder().encode(process.env.JWT_SECRET || "demo-secret");
-}
-
-async function createToken(payload: object) {
-  return new SignJWT(payload as Record<string, unknown>)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("8h")
-    .sign(getSecret());
-}
-
-async function verifyToken(token: string) {
-  try {
-    await jwtVerify(token, getSecret());
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { ADMIN_COOKIE, createToken, requireAdmin, verifyToken } from "@/lib/auth";
 
 // Client-facing names used by UI
 export async function adminLogin(password: string) {
@@ -33,11 +12,11 @@ export async function adminLogin(password: string) {
 }
 
 export async function adminLogout() {
-  cookies().delete("admin-token");
+  cookies().delete(ADMIN_COOKIE);
 }
 
 export async function checkAdminAuth(): Promise<boolean> {
-  const token = cookies().get("admin-token")?.value;
+  const token = cookies().get(ADMIN_COOKIE)?.value;
   if (!token) return false;
   return verifyToken(token);
 }
@@ -46,7 +25,7 @@ export async function loginAdmin(password: string) {
   if (isMockMode()) {
     if (password === "demo123" || password === process.env.ADMIN_PASSWORD) {
       const token = await createToken({ admin: true });
-      cookies().set("admin-token", token, {
+      cookies().set(ADMIN_COOKIE, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
@@ -73,7 +52,7 @@ export async function loginAdmin(password: string) {
 
   const token = await createToken({ adminId: admin.id });
 
-  cookies().set("admin-token", token, {
+  cookies().set(ADMIN_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -85,6 +64,8 @@ export async function loginAdmin(password: string) {
 }
 
 export async function getDashboardStats() {
+  await requireAdmin();
+
   if (isMockMode()) {
     return mockStats;
   }
@@ -116,6 +97,8 @@ export async function getDashboardStats() {
 }
 
 export async function getAdminTeams() {
+  await requireAdmin();
+
   if (isMockMode()) {
     return mockTeams.map((team) => ({
       ...team,
@@ -141,6 +124,8 @@ export async function getAdminTeams() {
 }
 
 export async function updateTeamStatus(teamId: string, status: string) {
+  await requireAdmin();
+
   if (isMockMode()) {
     revalidatePath("/admin");
     revalidatePath("/admin/teams");
@@ -159,6 +144,8 @@ export async function updateTeamStatus(teamId: string, status: string) {
 }
 
 export async function deleteTeam(teamId: string) {
+  await requireAdmin();
+
   if (isMockMode()) {
     revalidatePath("/admin");
     revalidatePath("/admin/teams");
@@ -176,6 +163,8 @@ export async function deleteTeam(teamId: string) {
 }
 
 export async function getAdminSettings() {
+  await requireAdmin();
+
   if (isMockMode()) {
     return {
       ...mockTournament,
@@ -232,6 +221,8 @@ export async function updateSettings(data: {
   streamTitle?: string;
   streamActive?: boolean;
 }) {
+  await requireAdmin();
+
   return updateTournament({
     name: data.name,
     date: data.date,
@@ -253,6 +244,8 @@ export async function updateSettings(data: {
 }
 
 export async function toggleRegistration() {
+  await requireAdmin();
+
   if (isMockMode()) {
     revalidatePath("/admin");
     revalidatePath("/");
@@ -279,6 +272,8 @@ export async function toggleRegistration() {
 }
 
 export async function exportTeams() {
+  await requireAdmin();
+
   if (isMockMode()) {
     const XLSX = await import("xlsx");
     const data = mockTeams.map((team) => ({
@@ -338,6 +333,8 @@ export async function updateTournament(data: {
   streamTitle?: string;
   streamActive?: boolean;
 }) {
+  await requireAdmin();
+
   if (isMockMode()) {
     revalidatePath("/");
     revalidatePath("/admin");

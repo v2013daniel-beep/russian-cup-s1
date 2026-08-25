@@ -186,6 +186,7 @@ vercel --prod
 ### Важно про Vercel
 
 - SQLite не работает на Vercel (serverless), поэтому обязательно используй PostgreSQL.
+- `vercel.json` автоматически переключает схему Prisma на PostgreSQL и применяет миграции при сборке.
 - `NEXT_PUBLIC_APP_URL` должен совпадать с реальным доменом (Vercel даёт свой).
 - Для Robokassa ResultURL указывай `https://your-domain.vercel.app/api/payment/result`.
 
@@ -201,7 +202,7 @@ cd /opt/Dota\ 2\ new\ version
 export PATH="$PWD/node:$PATH"
 npm install
 npx prisma generate
-npx prisma migrate dev
+npx prisma db push
 npx prisma db seed
 npm run build
 npm start

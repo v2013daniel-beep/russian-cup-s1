@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Trophy, LayoutDashboard, Users, Settings, LogOut, Calendar, ClipboardList } from "lucide-react";
+import { Trophy, LayoutDashboard, Users, Settings, LogOut, Calendar, ClipboardList, Award, History } from "lucide-react";
 import { adminLogout } from "@/server/actions/admin";
 
 const navItems = [
@@ -10,6 +10,8 @@ const navItems = [
   { href: "/admin/teams", label: "Команды", icon: Users },
   { href: "/admin/schedule", label: "Сетка", icon: Calendar },
   { href: "/admin/registrations", label: "Заявки", icon: ClipboardList },
+  { href: "/admin/hall-of-fame", label: "Зал славы", icon: Award },
+  { href: "/admin/tournaments", label: "Турниры", icon: History },
   { href: "/admin/settings", label: "Настройки", icon: Settings },
 ];
 

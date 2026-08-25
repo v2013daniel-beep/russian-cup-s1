@@ -1,8 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import crypto from "crypto";
 import { isMockMode } from "@/lib/mock";
+import { buildRobokassaUrl } from "@/lib/robokassa";
+
+function generateInvoiceId(): string {
+  // Robokassa requires a numeric InvId
+  return String(Math.floor(100000000 + Math.random() * 900000000));
+}
 
 export async function createRobokassaPayment(teamId: string) {
   return createPaymentUrl(teamId);
@@ -30,14 +35,25 @@ export async function createPaymentUrl(teamId: string) {
     throw new Error("Турнир не найден");
   }
 
-  const payment = team.payment || (await prisma.payment.create({
-    data: {
-      teamId: team.id,
-      amount: tournament.entryFee,
-      method: "robokassa",
-      status: "pending",
-    },
-  }));
+  let payment = team.payment;
+
+  if (!payment) {
+    payment = await prisma.payment.create({
+      data: {
+        teamId: team.id,
+        amount: tournament.entryFee,
+        method: "robokassa",
+        status: "pending",
+      },
+    });
+  }
+
+  if (!payment.externalId) {
+    payment = await prisma.payment.update({
+      where: { id: payment.id },
+      data: { externalId: generateInvoiceId() },
+    });
+  }
 
   const merchantLogin = process.env.ROBOKASSA_MERCHANT_LOGIN;
   const password1 = process.env.ROBOKASSA_PASSWORD_1;
@@ -46,25 +62,24 @@ export async function createPaymentUrl(teamId: string) {
     throw new Error("Robokassa не настроена");
   }
 
-  const outSum = tournament.entryFee.toString();
-  const invId = payment.id;
-  const description = encodeURIComponent(`Регистрация ${team.teamName}`);
-  const signatureValue = crypto
-    .createHash("md5")
-    .update(`${merchantLogin}:${outSum}:${invId}:${password1}`)
-    .digest("hex");
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const isTestMode = process.env.ROBOKASSA_TEST_MODE === "1" || process.env.ROBOKASSA_TEST_MODE === "true";
 
-  const isTestMode = process.env.ROBOKASSA_TEST_MODE === "true";
-  const testParam = isTestMode ? "&IsTest=1" : "";
+  const invoiceId = payment.externalId;
+  if (!invoiceId) {
+    throw new Error("Не удалось создать идентификатор платежа");
+  }
 
-  const url =
-    `https://auth.robokassa.ru/Merchant/Index.aspx?` +
-    `MerchantLogin=${merchantLogin}&` +
-    `OutSum=${outSum}&` +
-    `InvId=${invId}&` +
-    `Description=${description}&` +
-    `SignatureValue=${signatureValue}` +
-    testParam;
+  const url = buildRobokassaUrl(
+    merchantLogin,
+    tournament.entryFee,
+    invoiceId,
+    `Регистрация ${team.teamName}`,
+    password1,
+    isTestMode,
+    `${appUrl}/api/payment/success`,
+    `${appUrl}/api/payment/result`
+  );
 
-  return { url, invoiceId: invId };
+  return { url, invoiceId };
 }

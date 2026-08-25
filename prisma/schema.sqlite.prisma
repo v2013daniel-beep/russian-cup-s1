@@ -16,6 +16,9 @@ model Tournament {
   format          String   @default("5x5")
   server          String   @default("EU / RU")
   registrationOpen Boolean @default(true)
+  streamUrl       String?
+  streamTitle     String   @default("Трансляция скоро начнётся")
+  streamActive    Boolean  @default(false)
   contacts        Contact?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -73,6 +76,19 @@ model Payment {
   updatedAt     DateTime @updatedAt
 }
 
+model Match {
+  id            String    @id @default(cuid())
+  round         Int
+  matchNumber   Int
+  teamA         String?
+  teamB         String?
+  scheduledAt   DateTime?
+  status        String    @default("scheduled")
+  winner        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
 model Admin {
   id        String   @id @default(cuid())
   username  String   @unique @default("admin")
@@ -85,4 +101,29 @@ model Visit {
   date      DateTime @default(now())
   ip        String?
   userAgent String?
+}
+
+model HallOfFameEntry {
+  id        String   @id @default(cuid())
+  place     Int
+  team      String
+  title     String
+  prize     String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PastTournament {
+  id          String   @id @default(cuid())
+  name        String
+  date        String
+  winner      String
+  secondPlace String?
+  thirdPlace  String?
+  teamsCount  Int      @default(0)
+  prizePool   String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

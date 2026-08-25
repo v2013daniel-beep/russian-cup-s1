@@ -102,3 +102,28 @@ model Visit {
   ip        String?
   userAgent String?
 }
+
+model HallOfFameEntry {
+  id        String   @id @default(cuid())
+  place     Int
+  team      String
+  title     String
+  prize     String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PastTournament {
+  id          String   @id @default(cuid())
+  name        String
+  date        String
+  winner      String
+  secondPlace String?
+  thirdPlace  String?
+  teamsCount  Int      @default(0)
+  prizePool   String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

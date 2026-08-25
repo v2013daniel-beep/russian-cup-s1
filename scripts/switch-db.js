@@ -19,4 +19,9 @@ if (!fs.existsSync(targetSchema)) {
 
 fs.copyFileSync(targetSchema, mainSchema);
 console.log(`Switched to ${target} schema.`);
-console.log('Run: npx prisma generate && npx prisma migrate dev');
+
+if (target === 'sqlite') {
+  console.log('Run: npx prisma generate && npx prisma db push');
+} else {
+  console.log('Run: npx prisma generate && npx prisma migrate deploy');
+}

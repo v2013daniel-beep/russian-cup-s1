@@ -42,9 +42,9 @@ export function buildRobokassaUrl(
     InvId: invId,
     Description: description,
     SignatureValue: signature,
-    IsTest: testMode ? "1" : "0",
   });
 
+  if (testMode) params.append("IsTest", "1");
   if (successUrl) params.append("SuccessURL", successUrl);
   if (resultUrl) params.append("ResultURL", resultUrl);
 

@@ -13,12 +13,14 @@ export async function getSiteData(): Promise<SiteData> {
     throw new Error("Tournament not found");
   }
 
-  const [teams, matches] = await Promise.all([
+  const [teams, matches, hallOfFame, pastTournaments] = await Promise.all([
     prisma.team.findMany({
       include: { players: { orderBy: { order: "asc" } }, payment: true },
       orderBy: { createdAt: "desc" },
     }),
     prisma.match.findMany({ orderBy: [{ round: "asc" }, { matchNumber: "asc" }] }),
+    prisma.hallOfFameEntry.findMany({ orderBy: [{ order: "asc" }, { place: "asc" }] }),
+    prisma.pastTournament.findMany({ orderBy: [{ order: "asc" }, { date: "desc" }] }),
   ]);
 
   const registrations = teams.map((team) => ({
@@ -93,6 +95,25 @@ export async function getSiteData(): Promise<SiteData> {
       scheduledAt: match.scheduledAt?.toISOString(),
       status: match.status as "scheduled" | "live" | "finished",
       winner: match.winner || undefined,
+    })),
+    hallOfFame: hallOfFame.map((entry) => ({
+      id: entry.id,
+      place: entry.place,
+      team: entry.team,
+      title: entry.title,
+      prize: entry.prize,
+      order: entry.order,
+    })),
+    pastTournaments: pastTournaments.map((t) => ({
+      id: t.id,
+      name: t.name,
+      date: t.date,
+      winner: t.winner,
+      secondPlace: t.secondPlace || undefined,
+      thirdPlace: t.thirdPlace || undefined,
+      teamsCount: t.teamsCount,
+      prizePool: t.prizePool,
+      order: t.order,
     })),
   };
 }

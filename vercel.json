@@ -1,4 +1,4 @@
 {
-  "buildCommand": "prisma migrate deploy && prisma db seed && prisma generate && next build",
+  "buildCommand": "node scripts/switch-db.js postgresql && prisma generate && next build",
   "framework": "nextjs"
 }

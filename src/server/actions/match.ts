@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { type Match } from "@/lib/data";
+import { requireAdmin } from "@/lib/auth";
 
 export async function getMatches(): Promise<Match[]> {
   const matches = await prisma.match.findMany({
@@ -22,6 +23,8 @@ export async function getMatches(): Promise<Match[]> {
 }
 
 export async function createMatch(data: Omit<Match, "id">) {
+  await requireAdmin();
+
   const match = await prisma.match.create({
     data: {
       round: data.round,
@@ -53,6 +56,8 @@ export async function createMatch(data: Omit<Match, "id">) {
 }
 
 export async function updateMatch(matchId: string, data: Partial<Match>) {
+  await requireAdmin();
+
   await prisma.match.update({
     where: { id: matchId },
     data: {
@@ -73,6 +78,8 @@ export async function updateMatch(matchId: string, data: Partial<Match>) {
 }
 
 export async function deleteMatch(matchId: string) {
+  await requireAdmin();
+
   await prisma.match.delete({
     where: { id: matchId },
   });
@@ -84,6 +91,8 @@ export async function deleteMatch(matchId: string) {
 }
 
 export async function setMatches(matches: Match[]) {
+  await requireAdmin();
+
   await prisma.$transaction([
     prisma.match.deleteMany(),
     prisma.match.createMany({

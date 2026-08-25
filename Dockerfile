@@ -13,6 +13,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Switch Prisma schema to SQLite for Docker/VPS deployment
+RUN node scripts/switch-db.js sqlite
+
 # Generate Prisma client and build
 RUN npx prisma generate
 RUN npm run build
@@ -38,4 +41,4 @@ RUN mkdir -p /app/prisma
 EXPOSE 3000
 
 # Start the application
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && npm start"]
+CMD ["sh", "-c", "npx prisma db push && npx prisma db seed && npm start"]

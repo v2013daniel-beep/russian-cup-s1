@@ -77,6 +77,27 @@ export interface LiveStream {
   isActive: boolean;
 }
 
+export interface HallOfFameEntry {
+  id: string;
+  place: number;
+  team: string;
+  title: string;
+  prize: string;
+  order: number;
+}
+
+export interface PastTournament {
+  id: string;
+  name: string;
+  date: string;
+  winner: string;
+  secondPlace?: string;
+  thirdPlace?: string;
+  teamsCount: number;
+  prizePool: string;
+  order: number;
+}
+
 export interface SiteData {
   tournament: TournamentSettings;
   contacts: Contacts;
@@ -85,6 +106,8 @@ export interface SiteData {
   registrations: Registration[];
   visits: Visit[];
   matches: Match[];
+  hallOfFame: HallOfFameEntry[];
+  pastTournaments: PastTournament[];
 }
 
 export const defaultTournament: TournamentSettings = {
@@ -254,5 +277,7 @@ export function getDefaultData(): SiteData {
     registrations: [...defaultRegistrations],
     visits: [...defaultVisits],
     matches: [...defaultMatches],
+    hallOfFame: [],
+    pastTournaments: [],
   };
 }

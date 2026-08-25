@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { Suspense } from "react";
+import Link from "next/link";
 import { Hero } from "@/components/sections/Hero";
 import { TournamentInfo } from "@/components/sections/TournamentInfo";
 import { Registration } from "@/components/sections/Registration";
@@ -14,6 +15,8 @@ import { Contacts } from "@/components/sections/Contacts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { MouseGlow3D } from "@/components/effects/MouseGlow3D";
+import { Button } from "@/components/ui/Button";
+import { History } from "lucide-react";
 import { useSiteData } from "@/hooks/useSiteData";
 
 export function HomeClient({
@@ -21,11 +24,7 @@ export function HomeClient({
 }: {
   searchParams: { payment?: string };
 }) {
-  const { data, trackVisit } = useSiteData();
-
-  useEffect(() => {
-    trackVisit();
-  }, [trackVisit]);
+  const { data } = useSiteData();
 
   return (
     <>
@@ -48,6 +47,16 @@ export function HomeClient({
           title={data.liveStream.title}
           isActive={data.liveStream.isActive}
         />
+        <section className="py-12 bg-dota-black">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <Link href="/tournaments">
+              <Button variant="outline" size="lg">
+                <History className="w-5 h-5 mr-2" />
+                Прошедшие турниры
+              </Button>
+            </Link>
+          </div>
+        </section>
         <Registration
           entryFee={data.tournament.entryFee}
           registrationOpen={data.tournament.registrationOpen}
