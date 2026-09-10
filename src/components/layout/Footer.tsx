@@ -33,9 +33,9 @@ export function Footer() {
 
         <div className="border-t border-dota-gold/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-dota-muted">
           <div className="text-center md:text-left">
-            <p>ИП СОФРОНОВ ИВАН ДМИТРИЕВИЧ</p>
-            <p>ИНН: 130302322800</p>
-            <p>ОГРНИП: 325508100700869</p>
+            <p>ИП БАХТИЕВА РИММА ШАЙМАРДАНОВНА</p>
+            <p>ИНН: 024202629803</p>
+            <p>ОГРНИП: 326028000205896</p>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/oferta" className="hover:text-dota-gold transition-colors">
