@@ -37,9 +37,24 @@ export function Footer() {
             <p>ИНН: 024202629803</p>
             <p>ОГРНИП: 326028000205896</p>
           </div>
+          <div className="text-center text-dota-muted">
+            <p>
+              <a href="mailto:russiancup@mail.ru" className="hover:text-dota-gold transition-colors">
+                russiancup@mail.ru
+              </a>
+            </p>
+            <p className="mt-1">
+              <a href="tel:+79297484631" className="hover:text-dota-gold transition-colors">
+                +7 929 748-46-31
+              </a>
+            </p>
+          </div>
           <div className="flex items-center gap-4">
             <Link href="/oferta" className="hover:text-dota-gold transition-colors">
               Публичная оферта
+            </Link>
+            <Link href="/privacy" className="hover:text-dota-gold transition-colors">
+              Политика конфиденциальности
             </Link>
           </div>
         </div>

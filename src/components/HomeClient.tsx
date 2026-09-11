@@ -70,6 +70,7 @@ export function HomeClient({
           discord={data.contacts.discord}
           telegram={data.contacts.telegram}
           email={data.contacts.email}
+          phone={data.contacts.phone}
           responseTime={data.contacts.responseTime}
         />
       </main>

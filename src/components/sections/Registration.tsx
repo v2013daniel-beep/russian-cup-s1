@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CreditCard, Smartphone, Bitcoin } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -63,20 +63,18 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
     }
   };
 
-  const handlePayment = async (method: string) => {
+  const handlePayment = async () => {
     if (!registrationId) return;
 
-    setPaymentMethod(method);
+    setPaymentMethod("card");
 
-    if (method === "robokassa") {
-      try {
-        const { createRobokassaPayment } = await import("@/server/actions/payment");
-        const { url } = await createRobokassaPayment(registrationId);
-        window.location.href = url;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Ошибка создания платежа");
-        setPaymentMethod(null);
-      }
+    try {
+      const { createRobokassaPayment } = await import("@/server/actions/payment");
+      const { url } = await createRobokassaPayment(registrationId);
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка создания платежа");
+      setPaymentMethod(null);
     }
   };
 
@@ -116,65 +114,24 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
               </span>
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div className="max-w-md mx-auto">
               <Button
                 variant="gold"
                 fullWidth
-                disabled={paymentMethod === "robokassa"}
-                onClick={() => handlePayment("robokassa")}
-              >
-                Robokassa
-              </Button>
-              <Button
-                variant="outline"
-                fullWidth
+                size="lg"
                 disabled={paymentMethod === "card"}
-                onClick={() => handlePayment("card")}
+                onClick={handlePayment}
               >
-                <CreditCard className="w-4 h-4 mr-2" />
-                Карта
+                <CreditCard className="w-5 h-5 mr-2" />
+                {paymentMethod === "card"
+                  ? "Переход к оплате..."
+                  : `Оплатить картой — ${entryFee.toLocaleString("ru-RU")} ₽`}
               </Button>
-              <Button
-                variant="outline"
-                fullWidth
-                disabled={paymentMethod === "sbp"}
-                onClick={() => handlePayment("sbp")}
-              >
-                <Smartphone className="w-4 h-4 mr-2" />
-                СБП
-              </Button>
+              <p className="mt-4 text-sm text-dota-muted">
+                Оплата банковской картой через защищённый платёжный сервис.
+                После успешной оплаты регистрация команды подтверждается автоматически.
+              </p>
             </div>
-            <div className="mt-4">
-              <Button
-                variant="secondary"
-                fullWidth
-                className="max-w-2xl mx-auto"
-                disabled={paymentMethod === "crypto"}
-                onClick={() => handlePayment("crypto")}
-              >
-                <Bitcoin className="w-4 h-4 mr-2" />
-                Crypto (USDT)
-              </Button>
-            </div>
-
-            {paymentMethod && paymentMethod !== "robokassa" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8 p-6 bg-dota-surface rounded-xl border border-dota-gold/20"
-              >
-                <p className="text-dota-gold font-bold mb-2">
-                  Реквизиты для оплаты ({paymentMethod.toUpperCase()})
-                </p>
-                <p className="text-dota-muted mb-4">
-                  Свяжитесь с администрацией для получения реквизитов и
-                  подтверждения оплаты.
-                </p>
-                <p className="text-white font-mono bg-dota-black p-3 rounded">
-                  Сумма: {entryFee.toLocaleString("ru-RU")} ₽
-                </p>
-              </motion.div>
-            )}
 
             {error && <p className="mt-4 text-dota-red">{error}</p>}
           </motion.div>
@@ -367,6 +324,24 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
             </div>
 
             <div className="pt-6 border-t border-dota-gold/10">
+              <label className="flex items-start gap-3 mb-6 cursor-pointer text-sm text-dota-muted">
+                <input
+                  type="checkbox"
+                  required
+                  className="mt-0.5 w-4 h-4 accent-dota-red flex-shrink-0"
+                />
+                <span>
+                  Нажимая кнопку «Зарегистрировать команду», я принимаю условия{" "}
+                  <a href="/oferta" target="_blank" className="text-dota-gold hover:underline">
+                    Публичной оферты
+                  </a>{" "}
+                  и даю согласие на обработку персональных данных в соответствии с{" "}
+                  <a href="/privacy" target="_blank" className="text-dota-gold hover:underline">
+                    Политикой конфиденциальности
+                  </a>
+                  .
+                </span>
+              </label>
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div>
                   <p className="text-dota-muted text-sm">Стоимость участия</p>

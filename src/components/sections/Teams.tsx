@@ -31,6 +31,11 @@ export function Teams({ teams }: TeamsProps) {
 
   const paidTeams = teams.filter((team) => team.status === "paid");
 
+  const subtitle =
+    paidTeams.length > 0
+      ? `${paidTeams.length} команд подтвердили участие. Присоединяйся к лучшим!`
+      : "Идёт регистрация команд. Список участников обновляется по мере подтверждения заявок.";
+
   return (
     <section id="teams" className="py-28 bg-dota-black relative overflow-hidden">
       <div 
@@ -42,7 +47,7 @@ export function Teams({ teams }: TeamsProps) {
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle
           title="Команды-участники"
-          subtitle={`${paidTeams.length} команд подтвердили участие. Присоединяйся к лучшим!`}
+          subtitle={subtitle}
           accent="gold"
         />
 
@@ -66,7 +71,7 @@ export function Teams({ teams }: TeamsProps) {
         {filteredTeams.length === 0 ? (
           <Card className="text-center py-12">
             <p className="text-dota-muted text-lg">
-              Пока нет зарегистрированных команд. Будь первым!
+              Регистрация команд открыта. Заявки появятся в списке после подтверждения.
             </p>
           </Card>
         ) : (

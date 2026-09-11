@@ -12,7 +12,7 @@ async function main() {
       data: {
         name: "RUSSIAN CUP SEASON 1",
         date: new Date("2024-08-15T18:00:00.000Z"),
-        prizePool: "250 000 ₽",
+        prizePool: "100 000 ₽",
         entryFee: 5000,
         format: "5x5",
         server: "EU / RU",
@@ -23,8 +23,9 @@ async function main() {
         contacts: {
           create: {
             discord: "https://discord.gg/russiancup",
-            telegram: "https://t.me/russiancup_admin",
-            email: "admin@russiancup.ru",
+            telegram: "https://t.me/FODY_ex",
+            email: "russiancup@mail.ru",
+            phone: "+7 929 748-46-31",
             responseTime: "Ежедневно с 10:00 до 22:00 (MSK)",
           },
         },

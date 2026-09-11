@@ -66,17 +66,14 @@ export function Bracket({ matches = [] }: BracketProps) {
         >
           <TiltCard tiltAmount={6} glareEnabled={false}>
             <Card className="p-8 md:p-12">
-              {matches.length === 0 && (
-                <div className="text-center mb-8">
+              {matches.length === 0 ? (
+                <div className="text-center py-8">
                   <p className="text-dota-muted text-lg">
-                    Сетка турнира будет сформирована после закрытия регистрации.
-                  </p>
-                  <p className="text-dota-gold font-display font-bold text-xl mt-2">
-                    Ожидаем жеребьёвки...
+                    Сетка турнира будет сформирована после закрытия регистрации
+                    и опубликована на этой странице.
                   </p>
                 </div>
-              )}
-
+              ) : (
               <div className="relative">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-4">
                   {rounds.map((round) => {
@@ -173,6 +170,7 @@ export function Bracket({ matches = [] }: BracketProps) {
                   </svg>
                 </div>
               </div>
+              )}
             </Card>
           </TiltCard>
         </motion.div>

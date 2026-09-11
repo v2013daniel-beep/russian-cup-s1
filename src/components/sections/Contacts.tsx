@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MessageCircle, Send, Mail, Clock } from "lucide-react";
+import { MessageCircle, Send, Mail, Clock, Phone } from "lucide-react";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { Card } from "@/components/ui/Card";
 
@@ -9,24 +9,16 @@ interface ContactsProps {
   discord: string;
   telegram: string;
   email: string;
+  phone: string;
   responseTime: string;
 }
 
-export function Contacts({ discord, telegram, email, responseTime }: ContactsProps) {
+export function Contacts({ discord, telegram, email, phone, responseTime }: ContactsProps) {
   const contacts = [
-    {
-      icon: MessageCircle,
-      title: "Discord",
-      value: "Присоединиться к серверу",
-      href: discord,
-      color: "text-indigo-400",
-      bgColor: "bg-indigo-400/10",
-      borderColor: "border-indigo-400/30",
-    },
     {
       icon: Send,
       title: "Telegram",
-      value: "Написать в чат",
+      value: "Написать администратору",
       href: telegram,
       color: "text-sky-400",
       bgColor: "bg-sky-400/10",
@@ -40,6 +32,24 @@ export function Contacts({ discord, telegram, email, responseTime }: ContactsPro
       color: "text-dota-red",
       bgColor: "bg-dota-red/10",
       borderColor: "border-dota-red/30",
+    },
+    {
+      icon: Phone,
+      title: "Телефон",
+      value: phone,
+      href: `tel:${phone.replace(/[^+\d]/g, "")}`,
+      color: "text-dota-gold",
+      bgColor: "bg-dota-gold/10",
+      borderColor: "border-dota-gold/30",
+    },
+    {
+      icon: MessageCircle,
+      title: "Discord",
+      value: "Присоединиться к серверу",
+      href: discord,
+      color: "text-indigo-400",
+      bgColor: "bg-indigo-400/10",
+      borderColor: "border-indigo-400/30",
     },
   ];
 
@@ -60,7 +70,7 @@ export function Contacts({ discord, telegram, email, responseTime }: ContactsPro
           accent="gold"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {contacts.map((contact, index) => (
             <motion.a
               key={contact.title}

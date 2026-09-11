@@ -19,6 +19,7 @@ interface SettingsForm {
   discord: string;
   telegram: string;
   email: string;
+  phone: string;
   responseTime: string;
   streamUrl: string;
   streamTitle: string;
@@ -52,6 +53,7 @@ export default function AdminSettingsPage() {
       discord: data.contacts.discord,
       telegram: data.contacts.telegram,
       email: data.contacts.email,
+      phone: data.contacts.phone,
       responseTime: data.contacts.responseTime,
       streamUrl: data.liveStream.url,
       streamTitle: data.liveStream.title,
@@ -74,6 +76,7 @@ export default function AdminSettingsPage() {
       discord: settings.discord,
       telegram: settings.telegram,
       email: settings.email,
+      phone: settings.phone,
       responseTime: settings.responseTime,
       streamUrl: settings.streamUrl,
       streamTitle: settings.streamTitle,
@@ -174,6 +177,11 @@ export default function AdminSettingsPage() {
                 label="Email"
                 value={settings.email}
                 onChange={(e) => updateField("email", e.target.value)}
+              />
+              <Input
+                label="Телефон"
+                value={settings.phone}
+                onChange={(e) => updateField("phone", e.target.value)}
               />
               <Input
                 label="Время ответа"

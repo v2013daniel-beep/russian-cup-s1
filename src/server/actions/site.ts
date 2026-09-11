@@ -57,6 +57,7 @@ export async function getSiteData(): Promise<SiteData> {
       discord: tournament.contacts?.discord || "",
       telegram: tournament.contacts?.telegram || "",
       email: tournament.contacts?.email || "",
+      phone: tournament.contacts?.phone || "",
       responseTime: tournament.contacts?.responseTime || "",
     },
     liveStream: {

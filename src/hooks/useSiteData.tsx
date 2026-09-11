@@ -117,6 +117,7 @@ export function SiteDataProvider({
           discord: contacts.discord ?? fresh.contacts.discord,
           telegram: contacts.telegram ?? fresh.contacts.telegram,
           email: contacts.email ?? fresh.contacts.email,
+          phone: contacts.phone ?? fresh.contacts.phone,
           responseTime: contacts.responseTime ?? fresh.contacts.responseTime,
         },
         streamUrl: fresh.liveStream.url,

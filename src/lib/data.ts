@@ -68,6 +68,7 @@ export interface Contacts {
   discord: string;
   telegram: string;
   email: string;
+  phone: string;
   responseTime: string;
 }
 
@@ -112,8 +113,8 @@ export interface SiteData {
 
 export const defaultTournament: TournamentSettings = {
   name: "RUSSIAN CUP SEASON 1",
-  date: "2024-08-15T18:00:00.000Z",
-  prizePool: "250 000 ₽",
+  date: "2026-10-11T18:00:00.000Z",
+  prizePool: "100 000 ₽",
   entryFee: 5000,
   format: "5x5",
   server: "EU / RU",
@@ -122,8 +123,9 @@ export const defaultTournament: TournamentSettings = {
 
 export const defaultContacts: Contacts = {
   discord: "https://discord.gg/russiancup",
-  telegram: "https://t.me/russiancup_admin",
-  email: "admin@russiancup.ru",
+  telegram: "https://t.me/FODY_ex",
+  email: "russiancup@mail.ru",
+  phone: "+7 929 748-46-31",
   responseTime: "ежедневно с 10:00 до 22:00 (MSK)",
 };
 

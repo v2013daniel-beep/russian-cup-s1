@@ -171,6 +171,7 @@ export async function getAdminSettings() {
       discord: mockTournament.contacts.discord,
       telegram: mockTournament.contacts.telegram,
       email: mockTournament.contacts.email,
+      phone: mockTournament.contacts.phone,
       responseTime: mockTournament.contacts.responseTime,
       streamUrl: "",
       streamTitle: "Трансляция скоро начнётся",
@@ -198,6 +199,7 @@ export async function getAdminSettings() {
     discord: tournament.contacts?.discord || "",
     telegram: tournament.contacts?.telegram || "",
     email: tournament.contacts?.email || "",
+    phone: tournament.contacts?.phone || "",
     responseTime: tournament.contacts?.responseTime || "",
     streamUrl: tournament.streamUrl || "",
     streamTitle: tournament.streamTitle,
@@ -216,6 +218,7 @@ export async function updateSettings(data: {
   discord: string;
   telegram: string;
   email: string;
+  phone: string;
   responseTime: string;
   streamUrl?: string;
   streamTitle?: string;
@@ -235,6 +238,7 @@ export async function updateSettings(data: {
       discord: data.discord,
       telegram: data.telegram,
       email: data.email,
+      phone: data.phone,
       responseTime: data.responseTime,
     },
     streamUrl: data.streamUrl || "",
@@ -327,6 +331,7 @@ export async function updateTournament(data: {
     discord: string;
     telegram: string;
     email: string;
+    phone: string;
     responseTime: string;
   };
   streamUrl?: string;
