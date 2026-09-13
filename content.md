@@ -6,8 +6,9 @@
 **Резервная копия:** `D:\KimiKod\Project\russian-cup-s1`  
 **Репозиторий:** https://github.com/v2013daniel-beep/russian-cup-s1.git  
 **Домен:** https://russiancupturnament.com/ (+ www)  
-**База данных:** Supabase — `https://hlymvaaoggduxhmngudn.supabase.co` (PostgreSQL, eu-west-1, pooler 6543)  
-**Стек:** Next.js 14 + TypeScript + Tailwind + Prisma + PostgreSQL (Supabase).
+**База данных:** Локальный PostgreSQL на VPS (`127.0.0.1:5432/russiancup`, user `russiancup`).
+Supabase **больше не используется** — из России соединения до него нестабильны (таймауты пула Prisma P2024 под нагрузкой, как transaction-, так и session-pooler). Данные перенесены из Supabase 2026-09-13 скриптами `export-data.mjs`/`import-data.mjs` (без таблицы visits — аналитика). URL к Supabase сохранён в бэкапе `.env.supabase.bak` на VPS.
+**Стек:** Next.js 14 + TypeScript + Tailwind + Prisma + PostgreSQL (локальный).
 
 ---
 
