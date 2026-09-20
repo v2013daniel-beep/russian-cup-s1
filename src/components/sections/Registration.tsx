@@ -110,11 +110,18 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
               Теперь оплатите участие команды, чтобы подтвердить регистрацию.
               <br />
               <span className="text-dota-gold font-bold">
-                Взнос за команду: {entryFee.toLocaleString("ru-RU")} ₽
+                Регистрационный взнос за команду: {entryFee.toLocaleString("ru-RU")} ₽
               </span>
             </p>
 
             <div className="max-w-md mx-auto">
+              <div className="text-left text-sm text-dota-muted mb-6 space-y-1.5">
+                <p className="text-white font-medium mb-2">Во взнос входит:</p>
+                <p>— судейское обслуживание матчей;</p>
+                <p>— игровой сервер и формирование сетки;</p>
+                <p>— трансляции ключевых матчей с комментаторами;</p>
+                <p>— информационная поддержка в Discord и Telegram.</p>
+              </div>
               <Button
                 variant="gold"
                 fullWidth
@@ -334,6 +341,10 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
                   Нажимая кнопку «Зарегистрировать команду», я принимаю условия{" "}
                   <a href="/oferta" target="_blank" className="text-dota-gold hover:underline">
                     Публичной оферты
+                  </a>{" "}
+                  и{" "}
+                  <a href="/regulations" target="_blank" className="text-dota-gold hover:underline">
+                    Регламента турнира
                   </a>{" "}
                   и даю согласие на обработку персональных данных в соответствии с{" "}
                   <a href="/privacy" target="_blank" className="text-dota-gold hover:underline">

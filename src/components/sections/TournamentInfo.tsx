@@ -18,7 +18,7 @@ export function TournamentInfo({ prizePool, format, server }: TournamentInfoProp
     {
       icon: Trophy,
       title: "Премиальный призовой фонд",
-      description: `Соревнуйтесь за ${prizePool}. Денежные призы для призёров турнира.`,
+      description: `Гарантированный призовой фонд ${prizePool} от организатора. Денежные призы для призёров турнира.`,
       color: "text-dota-gold",
       bgColor: "bg-dota-gold/10",
       borderColor: "border-dota-gold/30",

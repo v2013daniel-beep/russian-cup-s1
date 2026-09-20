@@ -27,7 +27,7 @@ export function Footer() {
 
           <div className="text-center md:text-right text-dota-muted text-sm">
             <p>© 2026 RUSSIAN CUP. Все права защищены.</p>
-            <p className="mt-1">18+ | Турнир проводится для любителей Dota 2</p>
+            <p className="mt-1">16+ | Киберспортивное соревнование, не является азартной игрой</p>
           </div>
         </div>
 
@@ -52,6 +52,12 @@ export function Footer() {
           <div className="flex items-center gap-4">
             <Link href="/oferta" className="hover:text-dota-gold transition-colors">
               Публичная оферта
+            </Link>
+            <Link href="/regulations" className="hover:text-dota-gold transition-colors">
+              Регламент турнира
+            </Link>
+            <Link href="/oferta#refund" className="hover:text-dota-gold transition-colors">
+              Возврат средств
             </Link>
             <Link href="/privacy" className="hover:text-dota-gold transition-colors">
               Политика конфиденциальности
