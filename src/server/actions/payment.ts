@@ -2,18 +2,28 @@
 
 import { prisma } from "@/lib/db";
 import { isMockMode } from "@/lib/mock";
-import { buildRobokassaUrl } from "@/lib/robokassa";
+
+const BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME || "russiancupseasonbot";
 
 function generateInvoiceId(): string {
-  // Robokassa requires a numeric InvId
   return String(Math.floor(100000000 + Math.random() * 900000000));
 }
 
-export async function createRobokassaPayment(teamId: string) {
-  return createPaymentUrl(teamId);
+async function assignKopecks(): Promise<number> {
+  const pending = await prisma.payment.findMany({
+    where: { status: "pending" },
+    select: { kopecks: true },
+  });
+  const used = new Set(pending.map((p) => p.kopecks));
+  const free: number[] = [];
+  for (let i = 1; i <= 99; i++) {
+    if (!used.has(i)) free.push(i);
+  }
+  if (free.length === 0) return 0;
+  return free[Math.floor(Math.random() * free.length)];
 }
 
-export async function createPaymentUrl(teamId: string) {
+export async function createTelegramPayment(teamId: string) {
   if (isMockMode()) {
     return { url: "#demo-payment", invoiceId: "demo-invoice" };
   }
@@ -42,44 +52,38 @@ export async function createPaymentUrl(teamId: string) {
       data: {
         teamId: team.id,
         amount: tournament.entryFee,
-        method: "robokassa",
+        method: "telegram_qr",
         status: "pending",
       },
     });
   }
 
-  if (!payment.externalId) {
+  const updates: { externalId?: string; kopecks?: number } = {};
+  if (!payment.externalId) updates.externalId = generateInvoiceId();
+  if (!payment.kopecks) updates.kopecks = await assignKopecks();
+
+  if (Object.keys(updates).length > 0) {
     payment = await prisma.payment.update({
       where: { id: payment.id },
-      data: { externalId: generateInvoiceId() },
+      data: updates,
     });
   }
 
-  const merchantLogin = process.env.ROBOKASSA_MERCHANT_LOGIN;
-  const password1 = process.env.ROBOKASSA_PASSWORD_1;
+  return {
+    url: `https://t.me/${BOT_USERNAME}?start=pay_${payment.externalId}`,
+    invoiceId: payment.externalId,
+  };
+}
 
-  if (!merchantLogin || !password1) {
-    throw new Error("Robokassa не настроена");
+export async function getPaymentStatus(teamId: string) {
+  const payment = await prisma.payment.findUnique({
+    where: { teamId },
+    select: { status: true, paidAt: true },
+  });
+
+  if (!payment) {
+    return { status: "none" as const };
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const isTestMode = process.env.ROBOKASSA_TEST_MODE === "1" || process.env.ROBOKASSA_TEST_MODE === "true";
-
-  const invoiceId = payment.externalId;
-  if (!invoiceId) {
-    throw new Error("Не удалось создать идентификатор платежа");
-  }
-
-  const url = buildRobokassaUrl(
-    merchantLogin,
-    tournament.entryFee,
-    invoiceId,
-    `Регистрация ${team.teamName}`,
-    password1,
-    isTestMode,
-    `${appUrl}/api/payment/success`,
-    `${appUrl}/api/payment/result`
-  );
-
-  return { url, invoiceId };
+  return { status: payment.status, paidAt: payment.paidAt };
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CreditCard } from "lucide-react";
+import { Send } from "lucide-react";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -32,6 +32,7 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
   const [success, setSuccess] = useState(false);
   const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -66,15 +67,36 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
   const handlePayment = async () => {
     if (!registrationId) return;
 
-    setPaymentMethod("card");
+    setPaymentMethod("telegram");
 
     try {
-      const { createRobokassaPayment } = await import("@/server/actions/payment");
-      const { url } = await createRobokassaPayment(registrationId);
+      const { createTelegramPayment } = await import("@/server/actions/payment");
+      const { url } = await createTelegramPayment(registrationId);
       window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка создания платежа");
       setPaymentMethod(null);
+    }
+  };
+
+  const handleCheckStatus = async () => {
+    if (!registrationId) return;
+
+    setStatusMessage("Проверяем...");
+
+    try {
+      const { getPaymentStatus } = await import("@/server/actions/payment");
+      const { status } = await getPaymentStatus(registrationId);
+
+      if (status === "success") {
+        setStatusMessage("Оплата подтверждена! Команда зарегистрирована на турнир.");
+      } else if (status === "pending") {
+        setStatusMessage("Оплата пока не подтверждена. Если вы уже оплатили и отправили чек боту, дождитесь проверки администратором.");
+      } else {
+        setStatusMessage("Платёк ещё не создан. Нажмите «Оплатить».");
+      }
+    } catch {
+      setStatusMessage("Не удалось проверить статус, попробуйте позже.");
     }
   };
 
@@ -126,18 +148,29 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
                 variant="gold"
                 fullWidth
                 size="lg"
-                disabled={paymentMethod === "card"}
+                disabled={paymentMethod === "telegram"}
                 onClick={handlePayment}
               >
-                <CreditCard className="w-5 h-5 mr-2" />
-                {paymentMethod === "card"
-                  ? "Переход к оплате..."
-                  : `Оплатить картой — ${entryFee.toLocaleString("ru-RU")} ₽`}
+                <Send className="w-5 h-5 mr-2" />
+                {paymentMethod === "telegram"
+                  ? "Открываем Telegram-бота..."
+                  : "Оплатить"}
               </Button>
               <p className="mt-4 text-sm text-dota-muted">
-                Оплата банковской картой через защищённый платёжный сервис.
-                После успешной оплаты регистрация команды подтверждается автоматически.
+                Оплата через нашего Telegram-бота: он покажет QR-код для перевода
+                из приложения вашего банка. После оплаты отправьте чек боту,
+                администратор подтвердит платёж.
               </p>
+              <button
+                type="button"
+                onClick={handleCheckStatus}
+                className="mt-3 text-sm text-dota-gold hover:underline"
+              >
+                Проверить статус оплаты
+              </button>
+              {statusMessage && (
+                <p className="mt-2 text-sm text-dota-muted">{statusMessage}</p>
+              )}
             </div>
 
             {error && <p className="mt-4 text-dota-red">{error}</p>}

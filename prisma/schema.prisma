@@ -69,9 +69,13 @@ model Payment {
   teamId        String   @unique
   team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   amount        Int
-  method        String   @default("robokassa")
+  method        String   @default("telegram_qr")
   status        String   @default("pending")
   externalId    String?
+  kopecks       Int      @default(0)
+  telegramId    String?
+  telegramUsername String?
+  receiptFileId String?
   paidAt        DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

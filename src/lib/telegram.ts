@@ -10,8 +10,9 @@ export async function notifyAdmin(message: string) {
   }
 
   try {
+    const apiRoot = process.env.TG_API_ROOT || "https://api.telegram.org";
     const response = await fetch(
-      `https://api.telegram.org/bot${token}/sendMessage`,
+      `${apiRoot}/bot${token}/sendMessage`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
