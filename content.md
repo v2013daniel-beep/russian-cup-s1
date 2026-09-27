@@ -50,10 +50,10 @@ Supabase **больше не используется** — из России с
 - **Схема:** Payment + поля `kopecks` (уникальные копейки 1-99 для идентификации перевода), `telegramId`, `telegramUsername`, `receiptFileId`. Метод оплаты: `telegram_qr`.
 - **Поток:** форма → `createTelegramPayment` (src/server/actions/payment.ts) → deep link `t.me/russiancupseasonbot?start=pay_<externalId>` → бот выдаёт QR+реквизиты → клиент шлёт чек → админу в TELEGRAM_ADMIN_CHAT_ID фото с кнопками ok:/no: → ✅ = Payment.success + Team.paid, ❌ = повторная отправка чека.
 - **Robokassa удалена** (lib/robokassa.ts, api/payment/result). Страница api/payment/success не используется.
-- **КРИТИЧНО — релей:** с VPS (RU IP) api.telegram.org НЕДОСТУПЕН (таймаут, Telegram блочит RU). Весь трафик идёт через релей на Vercel: код `D:\KimiKod\tg-relay` (вне репозитория), URL `https://russiancup-tg-relay.vercel.app/api/tg/bot<token>/<method>`, env TG_BOT_TOKEN в Vercel. И сайт (src/lib/telegram.ts), и бот используют `TG_API_ROOT`. **Токен Vercel, выданный 18.09, невалиден (User not found) — нужен свежий (Settings → Tokens).**
-- **VPS:** systemd `russiancup-bot.service` (enabled, НЕ запущен до деплоя релея; старт: `systemctl start russiancup-bot`). env бота: `/opt/russiancup/app/bot/.env` (BOT_TOKEN, ADMIN_CHAT_ID, DATABASE_URL, TG_API_ROOT). В сайтовом .env добавлены TG_API_ROOT и TELEGRAM_BOT_USERNAME.
-- **Деплой бота:** `cd /opt/russiancup/app && git pull && cd bot && npm ci && systemctl restart russiancup-bot` (после правок сайта — обычный деплой сайта).
-- До деплоя релея уведомления сайта админу в Telegram не доходят (были сломаны молча и раньше — та же блокировка).
+- **Релей:** задеплоен на Vercel, проект `russiancup-tg-relay` (код `D:\KimiKod\russiancup-tg-relay`, вне репозитория). URL `https://russiancup-tg-relay.vercel.app/api/tg/bot<token>/<method>`. env TG_BOT_TOKEN в Vercel. Маршрут: `api/tg/[token]/[method].js` (catch-all `[...slug]` на Vercel не ловил глубокие пути; `bodyParser:false` обязателен, иначе Vercel съедает тело POST).
+- **Доступ с VPS к релею:** часть anycast-IP Vercel (64.29.x, 216.198.x) фильтруется РКН на уровне TLS. Решение — пин в `/etc/hosts` на VPS: `76.76.21.21 russiancup-tg-relay.vercel.app` (этот IP работает). Если релей вдруг перестанет отвечать — проверить/сменить IP в /etc/hosts.
+- **VPS:** systemd `russiancup-bot.service` (enabled). env бота: `/opt/russiancup/app/bot/.env` (BOT_TOKEN, ADMIN_CHAT_ID, DATABASE_URL, TG_API_ROOT). В сайтовом .env добавлены TG_API_ROOT и TELEGRAM_BOT_USERNAME.
+- **ОТКРЫТО: ADMIN_CHAT_ID** — в .env стоял плейсхолдер `your_chat_id` (уведомления сайта никогда не работали по этой причине + блокировка TG). Нужен реальный chat_id админа → прописать в bot/.env и app/.env, запустить бота.
 
 ## Изменения в nginx на VPS (2026-09-18)
 
