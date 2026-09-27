@@ -37,6 +37,24 @@ Supabase **больше не используется** — из России с
 - **TODO перед повторной подачей:** проверить ОКВЭД ИП (нужны 93.29.9/93.19/90.02; кодов группы 92 быть не должно).
 - Локальная сборка (`npm run build`) проходит, страница `/regulations` генерируется.
 
+## ПРАВИЛО: экономия токенов
+
+После завершения задачи — короткий отчёт в чат (что сделано, что осталось), детали фиксировать в md-файлах проекта, а не в переписке.
+
+## Оплата через Telegram-бота (2026-09-18, внедрено)
+
+Кассы (ЮKassa, Robokassa, ENOT) отказали окончательно → приём оплаты через своего бота, перевод по реквизитам ИП (QR по ГОСТ СТ0001, Альфа-Банк). Ручное подтверждение админом.
+
+- **Бот:** @russiancupseasonbot, код `bot/src/index.js` (grammy + qrcode, CommonJS, лонг-поллинг вручную timeout=5). Prisma Client подтягивается из родительского `node_modules` приложения (отдельный generate в bot/ не нужен).
+- **Реквизиты зашиты в коде** (`PAYEE` в bot/src/index.js): счёт 40802810329310008672, БИК 042202824, Альфа-Банк.
+- **Схема:** Payment + поля `kopecks` (уникальные копейки 1-99 для идентификации перевода), `telegramId`, `telegramUsername`, `receiptFileId`. Метод оплаты: `telegram_qr`.
+- **Поток:** форма → `createTelegramPayment` (src/server/actions/payment.ts) → deep link `t.me/russiancupseasonbot?start=pay_<externalId>` → бот выдаёт QR+реквизиты → клиент шлёт чек → админу в TELEGRAM_ADMIN_CHAT_ID фото с кнопками ok:/no: → ✅ = Payment.success + Team.paid, ❌ = повторная отправка чека.
+- **Robokassa удалена** (lib/robokassa.ts, api/payment/result). Страница api/payment/success не используется.
+- **КРИТИЧНО — релей:** с VPS (RU IP) api.telegram.org НЕДОСТУПЕН (таймаут, Telegram блочит RU). Весь трафик идёт через релей на Vercel: код `D:\KimiKod\tg-relay` (вне репозитория), URL `https://russiancup-tg-relay.vercel.app/api/tg/bot<token>/<method>`, env TG_BOT_TOKEN в Vercel. И сайт (src/lib/telegram.ts), и бот используют `TG_API_ROOT`. **Токен Vercel, выданный 18.09, невалиден (User not found) — нужен свежий (Settings → Tokens).**
+- **VPS:** systemd `russiancup-bot.service` (enabled, НЕ запущен до деплоя релея; старт: `systemctl start russiancup-bot`). env бота: `/opt/russiancup/app/bot/.env` (BOT_TOKEN, ADMIN_CHAT_ID, DATABASE_URL, TG_API_ROOT). В сайтовом .env добавлены TG_API_ROOT и TELEGRAM_BOT_USERNAME.
+- **Деплой бота:** `cd /opt/russiancup/app && git pull && cd bot && npm ci && systemctl restart russiancup-bot` (после правок сайта — обычный деплой сайта).
+- До деплоя релея уведомления сайта админу в Telegram не доходят (были сломаны молча и раньше — та же блокировка).
+
 ## Изменения в nginx на VPS (2026-09-18)
 
 В `/etc/nginx/sites-available/russiancup` добавлен блок **до** `location /`:
