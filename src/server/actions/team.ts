@@ -79,7 +79,7 @@ export async function createTeam(data: TeamInput) {
     data: {
       teamId: team.id,
       amount: tournament.entryFee,
-      method: "robokassa",
+      method: "telegram_qr",
       status: "pending",
     },
   });
@@ -169,7 +169,7 @@ export async function addTeam(data: TeamInput & { status?: "pending" | "paid" })
       data: {
         teamId: team.id,
         amount: tournament.entryFee,
-        method: "robokassa",
+        method: "telegram_qr",
         status: data.status === "paid" ? "success" : "pending",
       },
     });
