@@ -278,8 +278,8 @@ async function remindStalePayments() {
 
 async function main() {
   await bot.api.deleteWebhook({ drop_pending_updates: true });
-  const me = await bot.api.getMe();
-  console.log(`Бот запущен: @${me.username}, API: ${API_ROOT}`);
+  await bot.init();
+  console.log(`Бот запущен: @${bot.botInfo.username}, API: ${API_ROOT}`);
 
   setInterval(() => remindStalePayments().catch(console.error), 24 * 60 * 60 * 1000);
 
