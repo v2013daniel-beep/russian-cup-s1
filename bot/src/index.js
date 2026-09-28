@@ -8,12 +8,15 @@ const QRCode = require("qrcode");
 const { PrismaClient } = require("@prisma/client");
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
-const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
+const ADMIN_CHAT_IDS = (process.env.ADMIN_CHAT_ID || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 const API_ROOT = process.env.TG_API_ROOT || "https://api.telegram.org";
 const DISCORD_URL = "https://discord.gg/9hGtjHAy";
 
-if (!BOT_TOKEN || !ADMIN_CHAT_ID) {
-  console.error("Заполните BOT_TOKEN и ADMIN_CHAT_ID в bot/.env");
+if (!BOT_TOKEN || ADMIN_CHAT_IDS.length === 0) {
+  console.error("Заполните BOT_TOKEN и ADMIN_CHAT_ID (можно несколько через запятую) в bot/.env");
   process.exit(1);
 }
 
@@ -168,17 +171,19 @@ bot.on(["message:photo", "message:document"], async (ctx) => {
     `Ожидаемая сумма: ${sumOf(payment)} ₽\n` +
     `Заявка создана: ${payment.createdAt.toLocaleString("ru-RU", { timeZone: "Europe/Moscow" })}`;
 
-  await bot.api.sendPhoto(ADMIN_CHAT_ID, fileId, {
-    caption,
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: "✅ Подтвердить", callback_data: `ok:${payment.id}` },
-          { text: "❌ Отклонить", callback_data: `no:${payment.id}` },
+  for (const adminId of ADMIN_CHAT_IDS) {
+    await bot.api.sendPhoto(adminId, fileId, {
+      caption,
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "✅ Подтвердить", callback_data: `ok:${payment.id}` },
+            { text: "❌ Отклонить", callback_data: `no:${payment.id}` },
+          ],
         ],
-      ],
-    },
-  });
+      },
+    });
+  }
 
   await ctx.reply(
     "Чек получен и передан администратору. Обычно проверка занимает до часа с 10:00 до 22:00 МСК. " +
@@ -187,7 +192,7 @@ bot.on(["message:photo", "message:document"], async (ctx) => {
 });
 
 bot.on("callback_query:data", async (ctx) => {
-  if (String(ctx.callbackQuery.message?.chat.id) !== String(ADMIN_CHAT_ID)) {
+  if (!ADMIN_CHAT_IDS.includes(String(ctx.callbackQuery.message?.chat.id))) {
     await ctx.answerCallbackQuery({ text: "Недоступно", show_alert: true });
     return;
   }
@@ -270,10 +275,12 @@ async function remindStalePayments() {
       `• ${p.team.teamName}: ${sumOf(p)} ₽, заявка ${p.externalId}` +
       (p.receiptFileId ? " (чек прислан)" : "")
   );
-  await bot.api.sendMessage(
-    ADMIN_CHAT_ID,
-    "⏰ Заявки ждут подтверждения дольше суток:\n\n" + lines.join("\n")
-  );
+  for (const adminId of ADMIN_CHAT_IDS) {
+    await bot.api.sendMessage(
+      adminId,
+      "⏰ Заявки ждут подтверждения дольше суток:\n\n" + lines.join("\n")
+    );
+  }
 }
 
 async function main() {
