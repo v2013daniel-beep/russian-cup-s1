@@ -53,7 +53,7 @@ Supabase **больше не используется** — из России с
 - **Релей:** задеплоен на Vercel, проект `russiancup-tg-relay` (код `D:\KimiKod\russiancup-tg-relay`, вне репозитория). URL `https://russiancup-tg-relay.vercel.app/api/tg/bot<token>/<method>`. env TG_BOT_TOKEN в Vercel. Маршрут: `api/tg/[token]/[method].js` (catch-all `[...slug]` на Vercel не ловил глубокие пути; `bodyParser:false` обязателен, иначе Vercel съедает тело POST).
 - **Доступ с VPS к релею:** часть anycast-IP Vercel (64.29.x, 216.198.x) фильтруется РКН на уровне TLS. Решение — пин в `/etc/hosts` на VPS: `76.76.21.21 russiancup-tg-relay.vercel.app` (этот IP работает). Если релей вдруг перестанет отвечать — проверить/сменить IP в /etc/hosts.
 - **VPS:** systemd `russiancup-bot.service` (enabled). env бота: `/opt/russiancup/app/bot/.env` (BOT_TOKEN, ADMIN_CHAT_ID, DATABASE_URL, TG_API_ROOT). В сайтовом .env добавлены TG_API_ROOT и TELEGRAM_BOT_USERNAME.
-- **ADMIN_CHAT_ID настроен:** `7206740589` (личка @V_Rasl) в bot/.env и app/.env (был плейсхолдер `your_chat_id` — уведомления сайта никогда не работали). Бот запущен 27.09, цепочка VPS → релей → Telegram проверена (getMe + sendMessage админу ок). Если заявки нужны в группу — добавить бота в группу и заменить ADMIN_CHAT_ID на id группы.
+- **ADMIN_CHAT_ID настроен:** `7206740589` (@V_Rasl) + `1378610978` (@FODY_ex), список через запятую в bot/.env (ADMIN_CHAT_ID) и app/.env (TELEGRAM_ADMIN_CHAT_ID). Уведомления уходят всем из списка (бот и src/lib/telegram.ts). Кнопки подтверждения работают у любого админа, повторное подтверждение заблокировано. Новый админ обязан один раз нажать /start в боте, иначе Telegram не даёт боту ему писать («chat not found»).
 
 ## Изменения в nginx на VPS (2026-09-18)
 
