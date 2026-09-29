@@ -1,6 +1,6 @@
 # Контекст работы над проектом
 
-**Обновлено:** 2026-09-18  
+**Обновлено:** 2026-09-29  
 **Проект:** Russian Cup S1 — лендинг/регистрация турнира по Dota 2  
 **Локальная папка:** `D:\KimiKod\Dota 2 new version`  
 **Резервная копия:** `D:\KimiKod\Project\russian-cup-s1`  
@@ -9,7 +9,7 @@
 **База данных:** Локальный PostgreSQL на VPS (`127.0.0.1:5432/russiancup`, user `russiancup`).
 Supabase **больше не используется** — из России соединения до него нестабильны (таймауты пула Prisma P2024 под нагрузкой, как transaction-, так и session-pooler). Данные перенесены из Supabase 2026-09-13 скриптами `export-data.mjs`/`import-data.mjs` (без таблицы visits — аналитика). URL к Supabase сохранён в бэкапе `.env.supabase.bak` на VPS.
 **Стек:** Next.js 14 + TypeScript + Tailwind + Prisma + PostgreSQL (локальный).  
-**Платёжный сервис (в работе):** **ENOT.io** (замена ЮKassa и Robokassa — обе отказали).
+**Платежи (в работе):** **Telegram-бот** @russiancupseasonbot (QR по реквизитам ИП + ручное подтверждение админом). ЮKassa, Robokassa, ENOT — окончательные отказы.
 
 ---
 
@@ -48,12 +48,23 @@ Supabase **больше не используется** — из России с
 - **Бот:** @russiancupseasonbot, код `bot/src/index.js` (grammy + qrcode, CommonJS, лонг-поллинг вручную timeout=5). Prisma Client подтягивается из родительского `node_modules` приложения (отдельный generate в bot/ не нужен).
 - **Реквизиты зашиты в коде** (`PAYEE` в bot/src/index.js): счёт 40802810329310008672, БИК 042202824, Альфа-Банк.
 - **Схема:** Payment + поля `kopecks` (уникальные копейки 1-99 для идентификации перевода), `telegramId`, `telegramUsername`, `receiptFileId`. Метод оплаты: `telegram_qr`.
-- **Поток:** форма → `createTelegramPayment` (src/server/actions/payment.ts) → deep link `t.me/russiancupseasonbot?start=pay_<externalId>` → бот выдаёт QR+реквизиты → клиент шлёт чек → админу в TELEGRAM_ADMIN_CHAT_ID фото с кнопками ok:/no: → ✅ = Payment.success + Team.paid, ❌ = повторная отправка чека.
+- **Поток:** форма → `createTelegramPayment` (src/server/actions/payment.ts) → deep link `t.me/russiancupseasonbot?start=pay_<externalId>` → бот выдаёт QR+реквизиты → клиент шлёт чек → админам (список ADMIN_CHAT_ID) фото/документ с кнопками ok:/no: → ✅ = Payment.success + Team.paid, ❌ = повторная отправка чека.
 - **Robokassa удалена** (lib/robokassa.ts, api/payment/result). Страница api/payment/success не используется.
 - **Релей:** задеплоен на Vercel, проект `russiancup-tg-relay` (код `D:\KimiKod\russiancup-tg-relay`, вне репозитория). URL `https://russiancup-tg-relay.vercel.app/api/tg/bot<token>/<method>`. env TG_BOT_TOKEN в Vercel. Маршрут: `api/tg/[token]/[method].js` (catch-all `[...slug]` на Vercel не ловил глубокие пути; `bodyParser:false` обязателен, иначе Vercel съедает тело POST).
 - **Доступ с VPS к релею:** часть anycast-IP Vercel (64.29.x, 216.198.x) фильтруется РКН на уровне TLS. Решение — пин в `/etc/hosts` на VPS: `76.76.21.21 russiancup-tg-relay.vercel.app` (этот IP работает). Если релей вдруг перестанет отвечать — проверить/сменить IP в /etc/hosts.
 - **VPS:** systemd `russiancup-bot.service` (enabled). env бота: `/opt/russiancup/app/bot/.env` (BOT_TOKEN, ADMIN_CHAT_ID, DATABASE_URL, TG_API_ROOT). В сайтовом .env добавлены TG_API_ROOT и TELEGRAM_BOT_USERNAME.
 - **ADMIN_CHAT_ID настроен:** `7206740589` (@V_Rasl) + `1378610978` (@FODY_ex), список через запятую в bot/.env (ADMIN_CHAT_ID) и app/.env (TELEGRAM_ADMIN_CHAT_ID). Уведомления уходят всем из списка (бот и src/lib/telegram.ts). Кнопки подтверждения работают у любого админа, повторное подтверждение заблокировано. Новый админ обязан один раз нажать /start в боте, иначе Telegram не даёт боту ему писать («chat not found»).
+
+### Исправленные баги при отладке (28-29.09)
+
+- **`bot.init()` обязателен при ручном поллинге** — без него `handleUpdate` падает с «Bot not initialized», бот молчал на все сообщения (поллинг при этом шёл).
+- **QR: `ST0001` → `ST00012`** — с заголовком ST0001 банковские приложения QR не распознают. Рабочий формат: ST00012 + все поля (Name с кавычками в имени банка ок).
+- **PDF-чек:** `sendPhoto` не принимает file_id документа → для документов используется `sendDocument` (бот молчал при PDF-чеке).
+- **team.ts создавал Payment с method "robokassa"** (2 места) → заменено на telegram_qr.
+- **Ошибки регистрации** (дубликат названия команды, регистрация закрыта) — Next в production санитизирует throw в generic-ошибку; теперь createTeam возвращает `{success:false,error}`, хук показывает понятный текст.
+- **Кэш браузера:** после деплоя у клиента может остаться старый JS-бандл → клик «Оплатить» не вызывает новый экшен (платёк не создаётся, бот отвечает «заявка не найдена» по старой ссылке). Лечится жёстким обновлением страницы (Ctrl+Shift+R).
+- **Историческое:** уведомления сайта не работали с самого начала — TELEGRAM_ADMIN_CHAT_ID был плейсхолдером + api.telegram.org недоступен с RU IP.
+- Проверка экшена оплаты в обход браузера: POST на `/` с заголовком `Next-Action: <id>` (id искать в `.next/server/app/page.js` рядом с createTelegramPayment), тело `["<teamId>"]` — возвращает deep link и присваивает externalId+kopecks.
 
 ## Изменения в nginx на VPS (2026-09-18)
 
@@ -139,9 +150,10 @@ systemctl restart russiancup
 
 ## Известные нерешённые вопросы
 
-- **Онлайн-касса:** подключается **ENOT.io** — домен подтверждён (HTML-файл), ждём одобрения кассы и ключи (Shop ID + secret). После получения: заменить Robokassa на ENOT в `src/server/actions/payment.ts` и webhook `src/app/api/payment/result/route.ts`. ЮKassa и Robokassa — окончательно отказали/отменены, код Robokassa (`payment.ts`, `buildRobokassaUrl`) подлежит замене.
+- **Онлайн-касса:** закрыто переходом на Telegram-бота (см. раздел выше). ENOT.io тоже отказал после повторной подачи с новым оформлением. Код Robokassa удалён. Если когда-нибудь вернётся карточный эквайринг, оформление сайта уже подготовлено (раздел «Оформление под модерацию»).
 - **JWT_SECRET:** для production сгенерировать случайную строку и прописать в `.env` на VPS (и локально).
-- **Мониторинг:** нет; при желании добавить проверку доступности из РФ (cron + check-host/uptime-robot). Заказчик спрашивал — обсуждали UptimeRobot/Telegram-бота с VPS, пока не настроено.
+- **Мониторинг:** нет; при желании добавить проверку доступности из РФ (cron + check-host/uptime-robot). Частично закрыто ботом: уведомления админам работают; можно добавить алерт о падении сайта/бота.
+- **Приёмка оплаты:** финальный сквозной тест (заявка → QR → чек PDF/фото → ✅ админа → статусы) — в процессе, по состоянию на 29.09 все компоненты по отдельности проверены и исправлены.
 
 ---
 
