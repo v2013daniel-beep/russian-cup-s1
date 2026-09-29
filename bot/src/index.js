@@ -153,7 +153,8 @@ bot.on(["message:photo", "message:document"], async (ctx) => {
     return;
   }
 
-  const fileId = ctx.message.photo
+  const isPhoto = !!ctx.message.photo;
+  const fileId = isPhoto
     ? ctx.message.photo[ctx.message.photo.length - 1].file_id
     : ctx.message.document.file_id;
 
@@ -171,18 +172,24 @@ bot.on(["message:photo", "message:document"], async (ctx) => {
     `Ожидаемая сумма: ${sumOf(payment)} ₽\n` +
     `Заявка создана: ${payment.createdAt.toLocaleString("ru-RU", { timeZone: "Europe/Moscow" })}`;
 
-  for (const adminId of ADMIN_CHAT_IDS) {
-    await bot.api.sendPhoto(adminId, fileId, {
-      caption,
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: "✅ Подтвердить", callback_data: `ok:${payment.id}` },
-            { text: "❌ Отклонить", callback_data: `no:${payment.id}` },
-          ],
+  const options = {
+    caption,
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: "✅ Подтвердить", callback_data: `ok:${payment.id}` },
+          { text: "❌ Отклонить", callback_data: `no:${payment.id}` },
         ],
-      },
-    });
+      ],
+    },
+  };
+
+  for (const adminId of ADMIN_CHAT_IDS) {
+    if (isPhoto) {
+      await bot.api.sendPhoto(adminId, fileId, options);
+    } else {
+      await bot.api.sendDocument(adminId, fileId, options);
+    }
   }
 
   await ctx.reply(
