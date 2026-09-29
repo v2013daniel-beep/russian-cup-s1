@@ -38,7 +38,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function qrPayload(payment) {
   const sumKopecks = payment.amount * 100 + payment.kopecks;
   return [
-    "ST0001",
+    "ST00012",
     `Name=${PAYEE.name}`,
     `PersonalAcc=${PAYEE.account}`,
     `BankName=${PAYEE.bank}`,
