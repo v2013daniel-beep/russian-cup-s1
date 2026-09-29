@@ -217,6 +217,10 @@ export function SiteDataProvider({
         players: registration.players as { nickname: string; mmr: string; dotabuff: string; steam: string }[],
       });
 
+      if (!result.success || !("teamId" in result) || !result.teamId) {
+        throw new Error("error" in result && result.error ? result.error : "Ошибка регистрации");
+      }
+
       await refresh();
 
       return {

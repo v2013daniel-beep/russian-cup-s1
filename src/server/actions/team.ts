@@ -37,11 +37,11 @@ export async function createTeam(data: TeamInput) {
   });
 
   if (!tournament) {
-    throw new Error("Tournament not found");
+    return { success: false as const, error: "Турнир не найден" };
   }
 
   if (!tournament.registrationOpen) {
-    throw new Error("Регистрация закрыта");
+    return { success: false as const, error: "Регистрация закрыта" };
   }
 
   const existingTeam = await prisma.team.findFirst({
@@ -49,7 +49,7 @@ export async function createTeam(data: TeamInput) {
   });
 
   if (existingTeam) {
-    throw new Error("Команда с таким названием уже зарегистрирована");
+    return { success: false as const, error: "Команда с таким названием уже зарегистрирована" };
   }
 
   const team = await prisma.team.create({
