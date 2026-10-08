@@ -302,7 +302,7 @@ async function main() {
     try {
       const updates = await bot.api.getUpdates({
         offset,
-        timeout: 5,
+        timeout: 20,
         allowed_updates: ["message", "callback_query"],
       });
       for (const update of updates) {
