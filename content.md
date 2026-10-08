@@ -193,3 +193,7 @@ certbot renew --dry-run            # проверка автообновлени
 ## nginx: редирект с голого IP (2026-10-06)
 
 В `/etc/nginx/sites-available/russiancup` в блоке :80 fallback `return 404` заменён на `return 301 https://russiancupturnament.com$request_uri` — теперь запрос по голому IP ведёт на сайт (помогает при клиентских DNS-проблемах). Бэкап конфига: `/etc/nginx/sites-available/russiancup.bak`. Редиректы доменов и certbot не затронуты.
+
+## Квота Vercel на релей (2026-10-08)
+
+Vercel предупредил о 75% расхода free Fluid Active CPU (4 ч/мес) — расход создаёт релей бота (поллинг каждые 5с). Снижено в 4 раза: getUpdates timeout 5→20с в bot/src/index.js. Если когда-нибудь проект релея приостановят — бот перестанет отвечать (сайт работает независимо): проверить статус проекта russiancup-tg-relay в Vercel, при необходимости передеплоить релей на другой аккаунт и обновить TG_API_ROOT в bot/.env и app/.env + пин IP в /etc/hosts. Письмо Supabase о паузе russian-cup-s1-prod игнорируем — Supabase не используется с 13.09.
