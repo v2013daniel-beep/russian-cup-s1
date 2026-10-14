@@ -23,6 +23,7 @@ const initialPlayer: Player = {
 };
 
 export function Registration({ entryFee, registrationOpen }: RegistrationProps) {
+  const paymentsEnabled = process.env.NEXT_PUBLIC_PAYMENTS_ENABLED === "true";
   const { addRegistration } = useSiteData();
   const [players, setPlayers] = useState<Player[]>(
     Array.from({ length: 5 }, () => ({ ...initialPlayer }))
@@ -128,15 +129,17 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
             <h3 className="text-3xl md:text-4xl font-display font-bold text-white mb-4">
               Заявка принята!
             </h3>
-            <p className="text-dota-muted text-lg mb-8">
-              Теперь оплатите участие команды, чтобы подтвердить регистрацию.
-              <br />
-              <span className="text-dota-gold font-bold">
-                Регистрационный взнос за команду: {entryFee.toLocaleString("ru-RU")} ₽
-              </span>
-            </p>
+            {paymentsEnabled ? (
+              <>
+                <p className="text-dota-muted text-lg mb-8">
+                  Теперь оплатите участие команды, чтобы подтвердить регистрацию.
+                  <br />
+                  <span className="text-dota-gold font-bold">
+                    Регистрационный взнос за команду: {entryFee.toLocaleString("ru-RU")} ₽
+                  </span>
+                </p>
 
-            <div className="max-w-md mx-auto">
+                <div className="max-w-md mx-auto">
               <div className="text-left text-sm text-dota-muted mb-6 space-y-1.5">
                 <p className="text-white font-medium mb-2">Во взнос входит:</p>
                 <p>— судейское обслуживание матчей;</p>
@@ -171,7 +174,14 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
               {statusMessage && (
                 <p className="mt-2 text-sm text-dota-muted">{statusMessage}</p>
               )}
-            </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-dota-muted text-lg">
+                Заявка принята! Администратор проверит её и свяжется с вами
+                в Telegram или Discord для подтверждения участия.
+              </p>
+            )}
 
             {error && <p className="mt-4 text-dota-red">{error}</p>}
           </motion.div>
