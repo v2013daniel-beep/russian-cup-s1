@@ -8,27 +8,16 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { useSiteData } from "@/hooks/useSiteData";
-import { type Player } from "@/lib/data";
 
 interface RegistrationProps {
   entryFee: number;
   registrationOpen: boolean;
 }
 
-const initialPlayer: Player = {
-  nickname: "",
-  mmr: "",
-  dotabuff: "",
-  steam: "",
-};
-
 export function Registration({ entryFee, registrationOpen }: RegistrationProps) {
   const paymentsEnabled = process.env.NEXT_PUBLIC_PAYMENTS_ENABLED === "true";
   const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "russiancupseasonbot";
   const { addRegistration } = useSiteData();
-  const [players, setPlayers] = useState<Player[]>(
-    Array.from({ length: 5 }, () => ({ ...initialPlayer }))
-  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -42,19 +31,26 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
     setError("");
 
     const formData = new FormData(e.currentTarget);
+    const nickname = formData.get("captainNickname") as string;
 
     try {
       const result = await addRegistration({
-        teamName: formData.get("teamName") as string,
-        teamTag: formData.get("teamTag") as string,
-        playerCount: parseInt(formData.get("playerCount") as string) || 5,
-        substitute: (formData.get("substitute") as string) || undefined,
+        teamName: `Игрок ${nickname}`,
+        teamTag: "SOLO",
+        playerCount: 1,
         captainName: formData.get("captainName") as string,
-        captainNickname: formData.get("captainNickname") as string,
+        captainNickname: nickname,
         captainTelegram: formData.get("captainTelegram") as string,
         captainDiscord: formData.get("captainDiscord") as string,
         captainEmail: formData.get("captainEmail") as string,
-        players,
+        players: [
+          {
+            nickname,
+            mmr: formData.get("mmr") as string,
+            dotabuff: (formData.get("dotabuff") as string) || "",
+            steam: (formData.get("steam") as string) || "",
+          },
+        ],
       });
 
       setRegistrationId(result.id);
@@ -91,7 +87,7 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
       const { status } = await getPaymentStatus(registrationId);
 
       if (status === "success") {
-        setStatusMessage("Оплата подтверждена! Команда зарегистрирована на турнир.");
+        setStatusMessage("Оплата подтверждена! Регистрация на турнир завершена.");
       } else if (status === "pending") {
         setStatusMessage("Оплата пока не подтверждена. Если вы уже оплатили и отправили чек боту, дождитесь проверки администратором.");
       } else {
@@ -102,18 +98,10 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
     }
   };
 
-  const updatePlayer = (index: number, field: keyof Player, value: string) => {
-    setPlayers((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
-      return next;
-    });
-  };
-
   if (success && registrationId) {
     return (
       <section id="register" className="py-28 bg-dota-black relative overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 opacity-5"
           style={{ backgroundImage: "url('/svgs/dota-pattern.svg')" }}
         />
@@ -133,48 +121,48 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
             {paymentsEnabled ? (
               <>
                 <p className="text-dota-muted text-lg mb-8">
-                  Теперь оплатите участие команды, чтобы подтвердить регистрацию.
+                  Теперь оплатите участие, чтобы подтвердить регистрацию.
                   <br />
                   <span className="text-dota-gold font-bold">
-                    Регистрационный взнос за команду: {entryFee.toLocaleString("ru-RU")} ₽
+                    Регистрационный взнос: {entryFee.toLocaleString("ru-RU")} ₽
                   </span>
                 </p>
 
                 <div className="max-w-md mx-auto">
-              <div className="text-left text-sm text-dota-muted mb-6 space-y-1.5">
-                <p className="text-white font-medium mb-2">Во взнос входит:</p>
-                <p>— судейское обслуживание матчей;</p>
-                <p>— игровой сервер и формирование сетки;</p>
-                <p>— трансляции ключевых матчей с комментаторами;</p>
-                <p>— информационная поддержка в Discord и Telegram.</p>
-              </div>
-              <Button
-                variant="gold"
-                fullWidth
-                size="lg"
-                disabled={paymentMethod === "telegram"}
-                onClick={handlePayment}
-              >
-                <Send className="w-5 h-5 mr-2" />
-                {paymentMethod === "telegram"
-                  ? "Открываем Telegram-бота..."
-                  : "Оплатить"}
-              </Button>
-              <p className="mt-4 text-sm text-dota-muted">
-                Оплата через нашего Telegram-бота: он покажет QR-код для перевода
-                из приложения вашего банка. После оплаты отправьте чек боту,
-                администратор подтвердит платёж.
-              </p>
-              <button
-                type="button"
-                onClick={handleCheckStatus}
-                className="mt-3 text-sm text-dota-gold hover:underline"
-              >
-                Проверить статус оплаты
-              </button>
-              {statusMessage && (
-                <p className="mt-2 text-sm text-dota-muted">{statusMessage}</p>
-              )}
+                  <div className="text-left text-sm text-dota-muted mb-6 space-y-1.5">
+                    <p className="text-white font-medium mb-2">Во взнос входит:</p>
+                    <p>— судейское обслуживание матчей;</p>
+                    <p>— игровой сервер и формирование сетки;</p>
+                    <p>— трансляции ключевых матчей с комментаторами;</p>
+                    <p>— информационная поддержка в Discord и Telegram.</p>
+                  </div>
+                  <Button
+                    variant="gold"
+                    fullWidth
+                    size="lg"
+                    disabled={paymentMethod === "telegram"}
+                    onClick={handlePayment}
+                  >
+                    <Send className="w-5 h-5 mr-2" />
+                    {paymentMethod === "telegram"
+                      ? "Открываем Telegram-бота..."
+                      : "Оплатить"}
+                  </Button>
+                  <p className="mt-4 text-sm text-dota-muted">
+                    Оплата через нашего Telegram-бота: он покажет QR-код для перевода
+                    из приложения вашего банка. После оплаты отправьте чек боту,
+                    администратор подтвердит платёж.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCheckStatus}
+                    className="mt-3 text-sm text-dota-gold hover:underline"
+                  >
+                    Проверить статус оплаты
+                  </button>
+                  {statusMessage && (
+                    <p className="mt-2 text-sm text-dota-muted">{statusMessage}</p>
+                  )}
                 </div>
               </>
             ) : (
@@ -233,16 +221,16 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
 
   return (
     <section id="register" className="py-28 bg-dota-black relative overflow-hidden">
-      <div 
+      <div
         className="absolute inset-0 opacity-5"
         style={{ backgroundImage: "url('/svgs/dota-pattern.svg')" }}
       />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(229,57,53,0.08)_0%,transparent_60%)]" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle
           title="Регистрация на турнир"
-          subtitle="Заполните форму ниже, чтобы зарегистрировать команду на RUSSIAN CUP SEASON 1"
+          subtitle="Заполните форму ниже, чтобы зарегистрироваться на RUSSIAN CUP SEASON 1"
           accent="red"
         />
 
@@ -262,61 +250,27 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
 
           <div className="space-y-8">
             <div>
-              <h3 className="text-xl font-display font-bold text-dota-gold mb-4 flex items-center gap-2">
-                <span className="w-8 h-8 rounded bg-dota-gold/10 flex items-center justify-center text-sm border border-dota-gold/30">
-                  1
-                </span>
-                Информация о команде
+              <h3 className="text-xl font-display font-bold text-dota-gold mb-4">
+                Информация об игроке
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
-                  label="Название команды *"
-                  name="teamName"
-                  required
-                  placeholder="Natus Vincere"
-                />
-                <Input
-                  label="Тег команды *"
-                  name="teamTag"
-                  required
-                  placeholder="NAVI"
-                />
-                <Input
-                  label="Количество игроков *"
-                  name="playerCount"
-                  type="number"
-                  defaultValue={5}
-                  min={1}
-                  max={6}
-                  required
-                />
-                <Input
-                  label="Запасной игрок (optional)"
-                  name="substitute"
-                  placeholder="Nickname запасного"
-                />
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-display font-bold text-dota-gold mb-4 flex items-center gap-2">
-                <span className="w-8 h-8 rounded bg-dota-gold/10 flex items-center justify-center text-sm border border-dota-gold/30">
-                  2
-                </span>
-                Информация о капитане
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Имя *"
+                  label="Имя и фамилия *"
                   name="captainName"
                   required
                   placeholder="Иван Иванов"
                 />
                 <Input
-                  label="Nickname *"
+                  label="Никнейм в Dota 2 *"
                   name="captainNickname"
                   required
-                  placeholder="CaptainNick"
+                  placeholder="YourNickname"
+                />
+                <Input
+                  label="MMR *"
+                  name="mmr"
+                  required
+                  placeholder="Например, 4500"
                 />
                 <Input
                   label="Telegram *"
@@ -335,64 +289,18 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
                   name="captainEmail"
                   type="email"
                   required
-                  placeholder="captain@example.com"
-                  className="md:col-span-2"
+                  placeholder="player@example.com"
                 />
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-display font-bold text-dota-gold mb-4 flex items-center gap-2">
-                <span className="w-8 h-8 rounded bg-dota-gold/10 flex items-center justify-center text-sm border border-dota-gold/30">
-                  3
-                </span>
-                Состав команды (5 игроков)
-              </h3>
-              <div className="space-y-4">
-                {players.map((player, index) => (
-                  <Card key={index} className="p-4 border-dota-gold/10">
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="w-6 h-6 rounded-full bg-dota-red/20 text-dota-red text-xs flex items-center justify-center font-bold border border-dota-red/30">
-                        {index + 1}
-                      </span>
-                      <span className="text-sm text-dota-muted font-medium">
-                        Игрок {index + 1}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                      <Input
-                        placeholder="Никнейм *"
-                        value={player.nickname}
-                        onChange={(e) =>
-                          updatePlayer(index, "nickname", e.target.value)
-                        }
-                        required
-                      />
-                      <Input
-                        placeholder="MMR *"
-                        value={player.mmr}
-                        onChange={(e) =>
-                          updatePlayer(index, "mmr", e.target.value)
-                        }
-                        required
-                      />
-                      <Input
-                        placeholder="Dotabuff ссылка"
-                        value={player.dotabuff}
-                        onChange={(e) =>
-                          updatePlayer(index, "dotabuff", e.target.value)
-                        }
-                      />
-                      <Input
-                        placeholder="Steam ссылка"
-                        value={player.steam}
-                        onChange={(e) =>
-                          updatePlayer(index, "steam", e.target.value)
-                        }
-                      />
-                    </div>
-                  </Card>
-                ))}
+                <Input
+                  label="Ссылка на Dotabuff"
+                  name="dotabuff"
+                  placeholder="https://www.dotabuff.com/players/..."
+                />
+                <Input
+                  label="Ссылка на Steam"
+                  name="steam"
+                  placeholder="https://steamcommunity.com/id/..."
+                />
               </div>
             </div>
 
@@ -404,7 +312,7 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
                   className="mt-0.5 w-4 h-4 accent-dota-red flex-shrink-0"
                 />
                 <span>
-                  Нажимая кнопку «Зарегистрировать команду», я принимаю условия{" "}
+                  Нажимая кнопку «Зарегистрироваться», я принимаю условия{" "}
                   <a href="/oferta" target="_blank" className="text-dota-gold hover:underline">
                     Публичной оферты
                   </a>{" "}
@@ -434,7 +342,7 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
                   disabled={loading}
                   className="w-full md:w-auto"
                 >
-                  {loading ? "Отправка..." : "Зарегистрировать команду"}
+                  {loading ? "Отправка..." : "Зарегистрироваться"}
                 </Button>
               </div>
             </div>

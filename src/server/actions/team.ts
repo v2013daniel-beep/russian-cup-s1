@@ -44,12 +44,14 @@ export async function createTeam(data: TeamInput) {
     return { success: false as const, error: "Регистрация закрыта" };
   }
 
-  const existingTeam = await prisma.team.findFirst({
-    where: { teamName: data.teamName },
-  });
+  if (data.teamTag !== "SOLO") {
+    const existingTeam = await prisma.team.findFirst({
+      where: { teamName: data.teamName },
+    });
 
-  if (existingTeam) {
-    return { success: false as const, error: "Команда с таким названием уже зарегистрирована" };
+    if (existingTeam) {
+      return { success: false as const, error: "Команда с таким названием уже зарегистрирована" };
+    }
   }
 
   const team = await prisma.team.create({
