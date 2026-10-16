@@ -419,13 +419,15 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
                   .
                 </span>
               </label>
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div>
-                  <p className="text-dota-muted text-sm">Стоимость участия</p>
-                  <p className="text-2xl font-display font-bold text-dota-gold">
-                    {entryFee.toLocaleString("ru-RU")} ₽
-                  </p>
-                </div>
+              <div className={`flex flex-col md:flex-row items-center gap-4 ${paymentsEnabled ? "justify-between" : "md:justify-end"}`}>
+                {paymentsEnabled && (
+                  <div>
+                    <p className="text-dota-muted text-sm">Стоимость участия</p>
+                    <p className="text-2xl font-display font-bold text-dota-gold">
+                      {entryFee.toLocaleString("ru-RU")} ₽
+                    </p>
+                  </div>
+                )}
                 <Button
                   type="submit"
                   size="lg"
