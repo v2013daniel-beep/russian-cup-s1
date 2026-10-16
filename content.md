@@ -210,3 +210,8 @@ Vercel предупредил о 75% расхода free Fluid Active CPU (4 ч/
 
 - Управляется флагом `NEXT_PUBLIC_PAYMENTS_ENABLED` ("false" сейчас; "true" = вернуть кнопку «Оплатить» и поток через бота). Важно: флаг NEXT_PUBLIC_* зашивается в сборку, поэтому после смены значения нужен rebuild: поменять в `/opt/russiancup/app/.env` → `npm run build` → `systemctl restart russiancup`.
 - Бот продолжает работать, отключать не нужно. Платежи, созданные в тестовый период, висят pending — при включении оплаты createTelegramPayment дозаполнит externalId/kopecks.
+
+## Уведомления о регистрации игроку и админу (2026-10-09)
+
+- Игрок после регистрации видит кнопку «Подтвердить в Telegram-боте» → deep link `t.me/russiancupseasonbot?start=reg_<teamId>` → бот присылает подтверждение и сохраняет telegramId в Payment (для будущих уведомлений).
+- Админу: на сайте TELEGRAM_BOT_TOKEN был плейсхолдером (`your_telegram_bot_token`) → уведомления о новых заявках не уходили. Исправлено на реальный токен бота в app/.env, отправка через TG_API_ROOT (релей), получатели — оба админа.
