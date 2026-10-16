@@ -72,6 +72,38 @@ async function sendInvoice(ctx, payment) {
 bot.command("start", async (ctx) => {
   const payload = (ctx.match || "").trim();
 
+  if (payload.startsWith("reg_")) {
+    const teamId = payload.slice(4);
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      include: { payment: true },
+    });
+
+    if (!team) {
+      await ctx.reply(
+        "Заявка не найдена. Зарегистрируйте команду на сайте russiancupturnament.com и нажмите «Подтвердить в Telegram-боте»."
+      );
+      return;
+    }
+
+    if (team.payment) {
+      await prisma.payment.update({
+        where: { id: team.payment.id },
+        data: {
+          telegramId: String(ctx.from.id),
+          telegramUsername: ctx.from.username || null,
+        },
+      });
+    }
+
+    await ctx.reply(
+      `✅ Команда «${team.teamName}» зарегистрирована на RUSSIAN CUP SEASON 1.\n\n` +
+        "Администратор проверит заявку и при необходимости свяжется с вами. " +
+        `Сетка и расписание появятся на сайте russiancupturnament.com и в Discord: ${DISCORD_URL}`
+    );
+    return;
+  }
+
   if (!payload.startsWith("pay_")) {
     await ctx.reply(
       "Привет! Это бот турнира RUSSIAN CUP SEASON 1.\n\n" +

@@ -24,6 +24,7 @@ const initialPlayer: Player = {
 
 export function Registration({ entryFee, registrationOpen }: RegistrationProps) {
   const paymentsEnabled = process.env.NEXT_PUBLIC_PAYMENTS_ENABLED === "true";
+  const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "russiancupseasonbot";
   const { addRegistration } = useSiteData();
   const [players, setPlayers] = useState<Player[]>(
     Array.from({ length: 5 }, () => ({ ...initialPlayer }))
@@ -177,10 +178,32 @@ export function Registration({ entryFee, registrationOpen }: RegistrationProps) 
                 </div>
               </>
             ) : (
-              <p className="text-dota-muted text-lg">
-                Заявка принята! Администратор проверит её и свяжется с вами
-                в Telegram или Discord для подтверждения участия.
-              </p>
+              <>
+                <p className="text-dota-muted text-lg mb-8">
+                  Заявка принята! Подтвердите регистрацию в нашем Telegram-боте:
+                  он пришлёт подтверждение и дальнейшие указания.
+                </p>
+                <div className="max-w-md mx-auto">
+                  <Button
+                    variant="gold"
+                    fullWidth
+                    size="lg"
+                    onClick={() =>
+                      window.open(
+                        `https://t.me/${botUsername}?start=reg_${registrationId}`,
+                        "_blank"
+                      )
+                    }
+                  >
+                    <Send className="w-5 h-5 mr-2" />
+                    Подтвердить в Telegram-боте
+                  </Button>
+                  <p className="mt-4 text-sm text-dota-muted">
+                    Администратор также получит уведомление о вашей заявке
+                    и свяжется с вами при необходимости.
+                  </p>
+                </div>
+              </>
             )}
 
             {error && <p className="mt-4 text-dota-red">{error}</p>}
